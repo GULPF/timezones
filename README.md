@@ -5,7 +5,7 @@ import times
 import timezones
 
 let tz = staticOffset(hours = -2, minutes = -30)
-let dt = initDateTime(1, mJan, 2000, 12, 00, 00).inZone(tz)
+let dt = initDateTime(1, mJan, 2000, 12, 00, 00, tz)
 echo dt     # 2000-01-01T12:00:00+02:30
 echo dt.utc # 2000-01-01T09:30:00+00:00
 ```
