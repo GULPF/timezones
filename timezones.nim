@@ -2,7 +2,7 @@ import times
 import strutils
 import "private/binformat"
 
-const tzdbpath {.strdefine.} = "./tzdb/2017c.nim"
+const tzdbpath {.strdefine.} = "./tzdb/2017c.bin"
 
 proc initTimezone(offset: int): Timezone =
 
