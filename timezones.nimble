@@ -5,7 +5,7 @@ author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
-skipFiles = @["fetchtzdb.nim"]
+skipFiles = @["fetchtzdb.nim", "tests.nim"]
 bin = @["fetchtzdb"]
 
 requires "nim >= 0.17.3"
