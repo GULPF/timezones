@@ -40,12 +40,14 @@ proc transformTzfile(tzname, content: string, result: var string) =
         lineIndex.inc
         # We don't need data on both sides of the transition,
         # so we discard every second line (we still need the first one though).
+        # xxx this is annoying, it means that the semantics of the first line is special
         if lineIndex != 0 and lineIndex mod 2 == 0: continue
-
-        let dt = tokens[2..5].join("-").parse("MMM-d-HH-mm-ss-yyyy", utc())
+        let format = "MMM-d-HH:mm:ss-yyyy"
+        let utc = tokens[2..5].join("-").parse(format, utc())
+        let adj = tokens[9..12].join("-").parse(format, utc())
         let isDst = if tokens[^2] == "isdst=1": true else: false
         let offset = tokens[^1].replace("gmtoff=", "")
-        result.add [tzname, $dt.toTime.toUnix, $isDst, $offset].join "\t"
+        result.add [tzname, $utc.toTime.toUnix, $adj.toTime.toUnix, $isDst, $offset].join "\t"
         result.add "\n"
 
 proc zdump(dest: string, startYear, endYear: int) =
@@ -68,6 +70,7 @@ proc zdump(dest: string, startYear, endYear: int) =
 
 proc fetchTimezoneDatabase*(version: string, dest = ".", startYear = 1500, endYear = 2066) =
     createDir TmpDir
+    removeDir ZicDir
     removeFile dest / "zones.txt"
     download version
     zic()
