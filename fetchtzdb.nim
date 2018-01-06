@@ -5,7 +5,7 @@ import strformat
 import sequtils
 import strutils
 import times
-import "private/binformat"
+import timezones/private/binformat
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"

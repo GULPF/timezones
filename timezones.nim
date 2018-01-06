@@ -1,6 +1,6 @@
 import times
 import strutils
-import "private/binformat"
+import timezones/private/binformat
 
 const tzdbpath {.strdefine.} = "./tzdb/2017c.bin"
 
