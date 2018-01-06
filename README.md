@@ -3,7 +3,7 @@ and the API is likely to change.
 
 It doesn't work with Nim devel yet, https://github.com/nim-lang/Nim/pull/7033 is required.
 
-#### Usage
+## Usage
 ```nim
 import times
 import timezones
@@ -15,9 +15,21 @@ echo initDateTime(1, mJan, 2000, 12, 00, 00, tz)
 let sweden = timezone("Europe/Stockholm")
 echo initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
 # => 1850-01-01T00:00:00-01:12
+
+# Compile time validation of timezone names
+let invalid = timezone("Europe/Stokholm")
+# Error: Timezone not found: 'Europe/Stokholm'.
+# Did you mean 'Europe/Stockholm'?
 ```
 
-#### TODO
-- Documentation
-- Tests
-- Static validation of timezone names
+## fetchtzdb
+This package also includes a tool called `fetchtzdb` for fetching the timezone database and converting it to
+the binary format used by `timezones`. This is not necessary for normal use since the package bundles the latest
+release (stored in the file `/tzdb/2017c.bin`), but it can be used to gain control over when the database is updated.
+Usage: `fetchtzdb <version> <dir>`. For example, `fetchtzdb 2014b .` will download version 2014b and save it to `2014b.bin` in the current directory.
+
+The `fetchtzdb` tool is not supported on Windows.
+
+## Using a custom timezone file
+Of course, downloading your own timezone file is not very useful unless you can instruct `timezone` to use it instead of the bundled one.
+To indicate that a different timezone file should be used, send the absolute path to the file as a command line define: `--define:tzdb=<path>`.
