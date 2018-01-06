@@ -64,10 +64,18 @@ proc staticOffset*(hours, minutes, seconds: int = 0): Timezone =
 const staticDatabase = binformat.staticReadFromString(staticRead tzdbpath)
 let timezoneDatabase = staticDatabase.finalize
 
-proc timezoneExists(name: string): bool =
+proc resolveTimezone(name: string): tuple[exists: bool, candidate: string] =
+    var bestCandidate: string
+    var bestDistance = high(int)
     for tz in staticDatabase.timezones:
         if tz.name == name:
-            return true
+            return (true, "")
+        else:
+            let distance = editDistance(tz.name, name)
+            if distance < bestDistance:
+                bestCandidate = tz.name
+                bestDistance = distance
+    return (false, bestCandidate)
 
 proc timezone*(name: string): Timezone =
     ## Create a timezone using a name from the IANA timezone database.
@@ -87,9 +95,11 @@ proc timezone*(name: static[string]): Timezone {.inline.} =
         let sweden = timezone("Europe/Stockholm")
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00-01:12"
-
-    when not name.timezoneExists:
-        {.fatal: "Timezone not found: '" & name & "'".}
+    
+    const resolved = name.resolveTimezone
+    when not resolved.exists:
+        {.fatal: "Timezone not found: '" & name &
+            "'.\nDid you mean '" & resolved.candidate & "'?".}
 
 const DatabaseYear* = staticDatabase.version.year
 const DatabaseRelease* = staticDatabase.version.release
