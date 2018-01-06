@@ -1,16 +1,8 @@
 import times
 import strutils
+import "private/binformat"
 
-type
-    Transition = object
-        startUtc: int64
-        startAdj: int64
-        isDst: bool
-        utcOffset: int32
-
-    InternalTimezone = object
-        transitions: seq[Transition]
-        name: string
+const tzdbpath {.strdefine.} = "./tzdb/2017c.nim"
 
 proc initTimezone(offset: int): Timezone =
 
@@ -62,45 +54,24 @@ proc staticOffset*(hours, minutes, seconds: int = 0): Timezone =
     let offset = hours * 3600 + minutes * 60 + seconds
     result = initTimezone(offset)
 
-let zonesTxt {.compileTime.} = staticRead("./tzdb/zones.txt")
-var tzBuffer {.compileTime.} = newSeq[InternalTimezone]()
-var currentTz {.compileTime.} = InternalTimezone(
-    transitions: newSeq[Transition]())
+const content = staticRead tzdbpath
+let timezoneDatabase = binformat.readFromString content
 
-# Load timezone data from file during compilation.
-# xxx very slow, need to use a binary format instead.
-static:
-    for line in zonesTxt.splitLines:
-        if line == "": continue
-        let tokens = line.splitWhitespace
-        
-        if tokens[0] != currentTz.name:
-            echo "Parsing ", tokens[0]
-            if not currentTz.name.isNil:
-                tzBuffer.add currentTz
-            currentTz = InternalTimezone(
-                name: tokens[0],
-                transitions: newSeq[Transition]())
-
-        currentTz.transitions.add Transition(
-            startUtc: parseInt(tokens[1]),
-            startAdj: parseInt(tokens[2]),
-            isDst: parseBool(tokens[3]),
-            utcOffset: parseInt(tokens[4]).int32)
-
-    if not currentTz.name.isNil:
-        tzBuffer.add currentTz
-
-const timezoneDatabase = tzBuffer
-
-proc timezone(name: string): Timezone =
+proc timezone*(name: string): Timezone =
     # xxx make it a hashtable or something
-    for tz in timezoneDatabase:
+    for tz in timezoneDatabase.timezones:
         if tz.name == name:
             result = initTimezone(tz)
 
-let tz = staticOffset(hours = -2, minutes = -30)
-let dt = initDateTime(1, mJan, 2000, 12, 00, 00)
-    .inZone(timezone("Europe/Stockholm"))
-echo dt     # 2000-01-01T12:00:00+02:30
-echo dt.utc # 2000-01-01T09:30:00+00:00
+proc castToInt32(str: string): int32 {.compileTime.} =
+    # Casting is very limited in the VM, this works for our simple use case.
+    when cpuEndian == littleEndian:
+        result = (str[3].int32 shl 24) or
+            (str[2].int32 shl 16) or (str[1].int32 shl 8) or str[0].int32
+    else:
+        result = (str[0].int32 shl 24) or
+            (str[1].int32 shl 16) or (str[2].int32 shl 8) or str[3].int32
+
+const DatabaseYear* = castToInt32(content[4..7])
+const DatabaseRelease* = content[8]
+const DatabaseVersion* = $DatabaseYear & DatabaseRelease

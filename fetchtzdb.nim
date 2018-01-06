@@ -5,6 +5,7 @@ import strformat
 import sequtils
 import strutils
 import times
+import "private/binformat"
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
@@ -29,8 +30,9 @@ proc zic() =
 
     discard execProcess fmt"zic -d {ZicDir} {files}"
 
-proc transformTzfile(tzname, content: string, result: var string) =
+proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezone]) =
     var lineIndex = -1
+    var timezone = InternalTimezone(name: tzname, transitions: @[])
 
     for line in content.splitLines:
         if line.len == 0: continue
@@ -38,21 +40,24 @@ proc transformTzfile(tzname, content: string, result: var string) =
         if tokens[^1] == "NULL": continue
 
         lineIndex.inc
-        # We don't need data on both sides of the transition,
-        # so we discard every second line (we still need the first one though).
-        # xxx this is annoying, it means that the semantics of the first line is special
         if lineIndex != 0 and lineIndex mod 2 == 0: continue
         let format = "MMM-d-HH:mm:ss-yyyy"
-        let utc = tokens[2..5].join("-").parse(format, utc())
-        let adj = tokens[9..12].join("-").parse(format, utc())
-        let isDst = if tokens[^2] == "isdst=1": true else: false
-        let offset = tokens[^1].replace("gmtoff=", "")
-        result.add [tzname, $utc.toTime.toUnix, $adj.toTime.toUnix, $isDst, $offset].join "\t"
-        result.add "\n"
+        let utc = tokens[2..5].join("-").parse(format, utc()).toTime
+        let adj = tokens[9..12].join("-").parse(format, utc()).toTime
+        let isDst = tokens[^2] == "isdst=1"
+        let offset = tokens[^1].replace("gmtoff=", "").parseInt
+        timezone.transitions.add Transition(
+            startUtc: utc.toUnix,
+            startAdj: adj.toUnix,
+            isDst: isDst,
+            utcOffset: offset.int32
+        )
 
-proc zdump(dest: string, startYear, endYear: int) =
-    let txtFile = open(getCurrentDir() / dest / "zones.txt", fmWrite)
-    var buffer = ""
+    appendTo.add timezone
+
+proc zdump(dest, version: string, startYear, endYear: int) =
+    var zones = newSeq[InternalTimezone]()
+
     for tzfile in walkDirRec(ZicDir, {pcFile}):
         let content = execProcess fmt"zdump -v -c {startYear},{endYear} {tzfile}"
         let (dir, city, _) = tzfile.splitFile
@@ -64,17 +69,19 @@ proc zdump(dest: string, startYear, endYear: int) =
             else:
                 let country = dir.extractFilename
                 country & "/" & city # E.g Europe/Stockholm
-
-        transformTzfile(tzname, content, result = buffer)
-    txtFile.write(buffer)
+        
+        processZdumpZone(tzname, content, appendTo = zones)
+    
+    let db = initOlsonDatabase(version[0..3].parseInt.int32, version[4], zones)
+    db.saveToFile getCurrentDir() / dest / fmt"{version}.bin"
 
 proc fetchTimezoneDatabase*(version: string, dest = ".", startYear = 1500, endYear = 2066) =
     createDir TmpDir
     removeDir ZicDir
-    removeFile dest / "zones.txt"
+    removeFile dest / fmt"{version}.bin"
     download version
     zic()
-    zdump dest, startYear, endYear
+    zdump dest, version, startYear, endYear
 
 when isMainModule:
     if paramCount() notin {1,2}:
