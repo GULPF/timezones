@@ -53,22 +53,23 @@ proc saveToFile*(db: OlsonDatabase, path: string) =
         for trans in zone.transitions:
             fs.write trans
 
-proc readDb(stream: Stream): OlsonDatabase =
-    let version = stream.readInt32
+proc readFromFile*(path: string): OlsonDatabase =
+    let fs = newFileStream(path, fmRead)    
+    let version = fs.readInt32
     doAssert version == Version, "Wrong format version"
-    let year = stream.readInt32
-    let release = stream.readChar
+    let year = fs.readInt32
+    let release = fs.readChar
     var zones = newSeq[InternalTimezone]()
 
-    while not stream.atEnd:
-        let nameLen = stream.readInt32
-        let name = stream.readStr nameLen
-        let transitionsLen = stream.readInt32
+    while not fs.atEnd:
+        let nameLen = fs.readInt32
+        let name = fs.readStr nameLen
+        let transitionsLen = fs.readInt32
         var transitions = newSeq[Transition](transitionsLen)
 
         for i in 0..<transitionsLen:
             var transition: Transition
-            discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
+            discard fs.readData(cast[pointer](addr transition), sizeof(Transition))
             transitions[i] = transition
         zones.add InternalTimezone(
             name: name,
@@ -76,14 +77,6 @@ proc readDb(stream: Stream): OlsonDatabase =
         )
             
     result = initOlsonDatabase(year, release, zones)
-
-proc readFromFile*(path: string): OlsonDatabase =
-    let fs = newFileStream(path, fmRead)    
-    result = fs.readDb()
-
-proc readFromString*(content: string): OlsonDatabase =
-    let ss = newStringStream(content)
-    result = ss.readDb()
 
 # This is a small VM friendly binary parser, probably slow as hell.
 
@@ -111,7 +104,8 @@ proc eatStr(str: string, len: int, index: var int): string =
 
 proc staticReadFromString*(content: string): StaticOlsonDatabase =
     var i = 0
-    discard content.eatI32(i)
+    let version = content.eatI32(i)
+    doAssert version == Version, "Wrong format version"    
     result.version.year = content.eatI32(i)
     result.version.release = content.eatChar(i)
     result.timezones = @[]
