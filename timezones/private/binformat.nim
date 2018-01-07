@@ -1,5 +1,8 @@
 import streams
 import times
+import strutils
+import os
+
 type
     Transition* = object {.packed.}
         startUtc*: int64  ## Seconds since 1970-01-01 UTC when transition starts
@@ -17,6 +20,8 @@ type
     OlsonDatabase* = object
         timezones*: seq[InternalTimezone]
         version*: OlsonVersion
+        startYear*: int32
+        endYear*: int32
 
     # Properly parsing the bin format during compile time is to slow
     # due to lack of proper casting. Luckily we can do most of the parsing
@@ -29,16 +34,38 @@ type
     StaticOlsonDataBase* = object
         timezones*: seq[StaticInternalTimezone]
         version*: OlsonVersion
+        startYear*: int32
+        endYear*: int32
 
-const Version = 1'i32
+    # I'd prefer to use exceptions for this, but they are not available
+    # at compile time.
+
+    ReadStatus* = enum
+        rsSuccess # Intentially the default value
+        rsFileDoesNotExist
+        rsIncorrectFormatVersion
+
+    ReadResult*[T: OlsonDatabase|StaticOlsonDataBase] = tuple
+        status: ReadStatus
+        payload: T
+
+const Version = 2'i32
 
 # Need this information in VM. Counted manually :-)
 proc sizeOf(typ: typedesc[Transition]): int = 21
 
-proc initOlsonDatabase*(year: int32, release: char,
+proc parseOlsonVersion*(versionStr: string): OlsonVersion =
+    result.year = versionStr[0..3].parseInt.int32
+    result.release = versionStr[4]
+
+proc `$`*(version: OlsonVersion): string =
+    $version.year & version.release
+
+proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
                         zones: seq[InternalTimezone]): OlsonDatabase =
-    result.version.year = year
-    result.version.release = release
+    result.version = version
+    result.startYear = startYear
+    result.endYear = endYear
     result.timezones = zones
 
 proc saveToFile*(db: OlsonDatabase, path: string) =
@@ -46,6 +73,8 @@ proc saveToFile*(db: OlsonDatabase, path: string) =
     fs.write Version
     fs.write db.version.year
     fs.write db.version.release
+    fs.write db.startYear
+    fs.write db.endYear
     for zone in db.timezones:
         fs.write zone.name.len.int32
         fs.write zone.name
@@ -53,13 +82,23 @@ proc saveToFile*(db: OlsonDatabase, path: string) =
         for trans in zone.transitions:
             fs.write trans
 
-proc readFromFile*(path: string): OlsonDatabase =
+proc readFromFile*(path: string): ReadResult[OlsonDatabase] =
+    if not path.fileExists:
+        result.status = rsFileDoesNotExist
+        return
+
     let fs = newFileStream(path, fmRead)    
     let version = fs.readInt32
-    doAssert version == Version, "Wrong format version"
-    let year = fs.readInt32
-    let release = fs.readChar
-    var zones = newSeq[InternalTimezone]()
+
+    if version != Version:
+        result.status = rsIncorrectFormatVersion
+        return
+
+    result.payload.version.year = fs.readInt32
+    result.payload.version.release = fs.readChar
+    result.payload.startYear = fs.readInt32
+    result.payload.endYear = fs.readInt32
+    result.payload.timezones = newSeq[InternalTimezone]()
 
     while not fs.atEnd:
         let nameLen = fs.readInt32
@@ -71,12 +110,10 @@ proc readFromFile*(path: string): OlsonDatabase =
             var transition: Transition
             discard fs.readData(cast[pointer](addr transition), sizeof(Transition))
             transitions[i] = transition
-        zones.add InternalTimezone(
+        result.payload.timezones.add InternalTimezone(
             name: name,
             transitions: transitions
         )
-            
-    result = initOlsonDatabase(year, release, zones)
 
 # This is a small VM friendly binary parser, probably slow as hell.
 
@@ -102,20 +139,30 @@ proc eatStr(str: string, len: int, index: var int): string =
     result = str[index..(index + len - 1)]
     index.inc len
 
-proc staticReadFromString*(content: string): StaticOlsonDatabase =
+proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
+    # if not path.fileExists:
+    #     result.status = rsFileDoesNotExist
+    #     return
+    
+    let content = staticRead path    
     var i = 0
-    let version = content.eatI32(i)
-    doAssert version == Version, "Wrong format version"    
-    result.version.year = content.eatI32(i)
-    result.version.release = content.eatChar(i)
-    result.timezones = @[]
+
+    if content.eatI32(i) != Version:
+        result.status = rsIncorrectFormatVersion
+        return
+
+    result.payload.version.year = content.eatI32(i)
+    result.payload.version.release = content.eatChar(i)
+    result.payload.startYear = content.eatI32(i)
+    result.payload.endYear = content.eatI32(i)
+    result.payload.timezones = @[]
 
     while i < content.len:
         let nameLen = content.eatI32(i)
         let name = content.eatStr(nameLen, i)
         let nTransitions = content.eatI32(i)
 
-        result.timezones.add StaticInternalTimezone(
+        result.payload.timezones.add StaticInternalTimezone(
             name: name,
             transitions: content.eatStr(nTransitions * sizeOf(Transition), i)
         )

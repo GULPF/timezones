@@ -12,11 +12,11 @@ const UnpackDir = TmpDir / "unpacked"
 const ZicDir = TmpDir / "binary"
 const DumpDir = TmpDir / "textdump"
 
-proc download(version: string) =
-    let tarFile = TmpDir / fmt"{version}.tar.gz"
+proc download(version: OlsonVersion) =
+    let tarFile = TmpDir / fmt"{$version}.tar.gz"
     if not tarFile.fileExists:
         var http = newHttpClient()
-        let url = fmt"https://www.iana.org/time-zones/repository/releases/tzdata{version}.tar.gz"
+        let url = fmt"https://www.iana.org/time-zones/repository/releases/tzdata{$version}.tar.gz"
         http.downloadFile url, tarFile
     removeDir UnpackDir
     createDir UnpackDir
@@ -55,7 +55,7 @@ proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezon
 
     appendTo.add timezone
 
-proc zdump(dest, version: string, startYear, endYear: int) =
+proc zdump(dest: string, version: OlsonVersion, startYear, endYear: int32) =
     var zones = newSeq[InternalTimezone]()
 
     for tzfile in walkDirRec(ZicDir, {pcFile}):
@@ -71,14 +71,16 @@ proc zdump(dest, version: string, startYear, endYear: int) =
                 country & "/" & city # E.g Europe/Stockholm
         
         processZdumpZone(tzname, content, appendTo = zones)
-    
-    let db = initOlsonDatabase(version[0..3].parseInt.int32, version[4], zones)
-    db.saveToFile getCurrentDir() / dest / fmt"{version}.bin"
 
-proc fetchTimezoneDatabase*(version: string, dest = ".", startYear = 1500, endYear = 2066) =
+    let db = initOlsonDatabase(version, startYear, endYear, zones)
+    db.saveToFile getCurrentDir() / dest / fmt"{$version}.bin"
+
+proc fetchTimezoneDatabase*(versionStr: string, dest = ".",
+                            startYear = 1500'i32, endYear = 2066'i32) =
+    let version = parseOlsonVersion(versionStr)
     createDir TmpDir
     removeDir ZicDir
-    removeFile dest / fmt"{version}.bin"
+    removeFile dest / fmt"{$version}.bin"
     download version
     zic()
     zdump dest, version, startYear, endYear
