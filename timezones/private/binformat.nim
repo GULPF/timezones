@@ -2,6 +2,7 @@ import streams
 import times
 import strutils
 import os
+import json
 
 type
     Transition* = object {.packed.}
@@ -22,6 +23,13 @@ type
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
+        fk*: FormatKind
+
+    # Casting `string` to `Transition` isn't possible in JS,
+    # so for that backend we need to store the transitions as JSON.
+    FormatKind* = enum
+        fkJson = 0,
+        fkBinary = 1
 
     # Properly parsing the bin format during compile time is to slow
     # due to lack of proper casting. Luckily we can do most of the parsing
@@ -36,12 +44,13 @@ type
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
+        fk: FormatKind
 
     # I'd prefer to use exceptions for this, but they are not available
     # at compile time.
 
     ReadStatus* = enum
-        rsSuccess # Intentially the default value
+        rsSuccess # intentionally the default value
         rsFileDoesNotExist
         rsIncorrectFormatVersion
 
@@ -49,10 +58,17 @@ type
         status: ReadStatus
         payload: T
 
-const Version = 2'i32
+# The current version of the binary format
+const Version = 3'i32
+# Header uses 32 bytes.
+const HeaderSize = 32'i32
+# The header size used by this version.
+const CurrentHeaderSize = 17'i32
+
+const HeaderPadding = newString(HeaderSize - CurrentHeaderSize)
 
 # Need this information in VM. Counted manually :-)
-proc sizeOf(typ: typedesc[Transition]): int = 21
+# proc sizeOf(typ: typedesc[Transition]): int = 21
 
 proc parseOlsonVersion*(versionStr: string): OlsonVersion =
     result.year = versionStr[0..3].parseInt.int32
@@ -68,19 +84,27 @@ proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
     result.endYear = endYear
     result.timezones = zones
 
-proc saveToFile*(db: OlsonDatabase, path: string) =
+proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) =
     let fs = newFileStream(path, fmWrite)
     fs.write Version
     fs.write db.version.year
     fs.write db.version.release
     fs.write db.startYear
     fs.write db.endYear
+    fs.write fk.int32
+    fs.write HeaderPadding
     for zone in db.timezones:
         fs.write zone.name.len.int32
         fs.write zone.name
-        fs.write zone.transitions.len.int32
-        for trans in zone.transitions:
-            fs.write trans
+        case fk
+        of fkBinary:
+            fs.write (zone.transitions.len * sizeOf(Transition)).int32
+            for trans in zone.transitions:
+                fs.write trans
+        of fkJson:
+            let json = %zone.transitions
+            fs.write json.len
+            fs.write json
 
 proc readFromFile*(path: string): ReadResult[OlsonDatabase] =
     if not path.fileExists:
@@ -98,22 +122,23 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] =
     result.payload.version.release = fs.readChar
     result.payload.startYear = fs.readInt32
     result.payload.endYear = fs.readInt32
+    result.payload.fk = fs.readInt32().FormatKind
     result.payload.timezones = newSeq[InternalTimezone]()
 
-    while not fs.atEnd:
-        let nameLen = fs.readInt32
-        let name = fs.readStr nameLen
-        let transitionsLen = fs.readInt32
-        var transitions = newSeq[Transition](transitionsLen)
-
-        for i in 0..<transitionsLen:
-            var transition: Transition
-            discard fs.readData(cast[pointer](addr transition), sizeof(Transition))
-            transitions[i] = transition
-        result.payload.timezones.add InternalTimezone(
-            name: name,
-            transitions: transitions
-        )
+    # while not fs.atEnd:
+    #     let nameLen = fs.readInt32
+    #     let name = fs.readStr nameLen
+    #     let transitionsLen = fs.readInt32
+    #     var transitions = newSeq[Transition](transitionsLen)
+    #     echo name
+    #     for i in 0..<transitionsLen:
+    #         var transition: Transition
+    #         discard fs.readData(cast[pointer](addr transition), sizeof(Transition))
+    #         transitions[i] = transition
+    #     result.payload.timezones.add InternalTimezone(
+    #         name: name,
+    #         transitions: transitions
+    #     )
 
 # This is a small VM friendly binary parser, probably slow as hell.
 
@@ -155,16 +180,17 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     result.payload.version.release = content.eatChar(i)
     result.payload.startYear = content.eatI32(i)
     result.payload.endYear = content.eatI32(i)
+    result.payload.fk = content.eatI32(i).FormatKind
+    i.inc HeaderPadding.len
     result.payload.timezones = @[]
 
     while i < content.len:
         let nameLen = content.eatI32(i)
         let name = content.eatStr(nameLen, i)
-        let nTransitions = content.eatI32(i)
-
+        let transitionsSize = content.eatI32(i)
         result.payload.timezones.add StaticInternalTimezone(
             name: name,
-            transitions: content.eatStr(nTransitions * sizeOf(Transition), i)
+            transitions: content.eatStr(transitionsSize, i)
         )
 
 {.pop.}
@@ -174,17 +200,26 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
 proc finalize*(db: StaticOlsonDataBase): OlsonDatabase =
     result.version = db.version
     result.timezones = @[]
-    for zone in db.timezones:
-        let stream = newStringStream(zone.transitions)
-        let transitionsLen = zone.transitions.len div sizeof(Transition)
-        var transitions = newSeq[Transition](transitionsLen)
 
-        for i in 0..<transitionsLen:
-            var transition: Transition
-            discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
-            transitions[i] = transition
+    case db.fk
+    of fkBinary:
+        for zone in db.timezones:
+            let stream = newStringStream(zone.transitions)
+            let transitionsLen = zone.transitions.len div sizeof(Transition)
+            var transitions = newSeq[Transition](transitionsLen)
 
-        result.timezones.add InternalTimezone(
-            name: zone.name,
-            transitions: transitions
-        )
+            for i in 0..<transitionsLen:
+                var transition: Transition
+                discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
+                transitions[i] = transition
+
+            result.timezones.add InternalTimezone(
+                name: zone.name,
+                transitions: transitions
+            )
+    of fkJson:
+        for zone in db.timezones:
+            result.timezones.add InternalTimezone(
+                name: zone.name,
+                transitions: parseJson(zone.transitions).to(seq[Transition])
+            )

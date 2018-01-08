@@ -5,12 +5,23 @@ import strformat
 import sequtils
 import strutils
 import times
+import options
+import parseopt2
 import timezones/private/binformat
+
+type
+    Command = enum
+        cFetch = "fetch", cDump = "dump", cDiff = "diff"
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
 const ZicDir = TmpDir / "binary"
 const DumpDir = TmpDir / "textdump"
+
+const DefaultRegions = @[
+    "africa", "antarctica", "asia", "australasia", "etcetera",
+    "europe", "northamerica", "southamerica", "pacificnew", "backward"
+]
 
 proc download(version: OlsonVersion) =
     let tarFile = TmpDir / fmt"{$version}.tar.gz"
@@ -22,12 +33,8 @@ proc download(version: OlsonVersion) =
     createDir UnpackDir
     discard execProcess fmt"tar -xf {tarFile} -C {UnpackDir}"
 
-proc zic() =
-    let files = [
-        "africa", "antarctica", "asia", "australasia", "etcetera",
-        "europe", "northamerica", "southamerica", "pacificnew", "backward"
-    ].mapIt(UnpackDir / it).join(" ")
-
+proc zic(regions: Option[seq[string]]) =
+    let files = regions.get(DefaultRegions).mapIt(UnpackDir / it).join(" ")
     discard execProcess fmt"zic -d {ZicDir} {files}"
 
 proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezone]) =
@@ -55,7 +62,9 @@ proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezon
 
     appendTo.add timezone
 
-proc zdump(dest: string, version: OlsonVersion, startYear, endYear: int32) =
+proc zdump(dest: string, version: OlsonVersion,
+           startYear, endYear: int32, timezones: Option[seq[string]],
+           formatKind: FormatKind) =
     var zones = newSeq[InternalTimezone]()
 
     for tzfile in walkDirRec(ZicDir, {pcFile}):
@@ -70,27 +79,88 @@ proc zdump(dest: string, version: OlsonVersion, startYear, endYear: int32) =
                 let country = dir.extractFilename
                 country & "/" & city # E.g Europe/Stockholm
         
+        if timezones.isSome and tzname notin timezones.get:
+            continue
+
         processZdumpZone(tzname, content, appendTo = zones)
 
     let db = initOlsonDatabase(version, startYear, endYear, zones)
-    db.saveToFile getCurrentDir() / dest / fmt"{$version}.bin"
+    db.saveToFile(dest, formatKind)
 
-proc fetchTimezoneDatabase*(versionStr: string, dest = ".",
-                            startYear = 1500'i32, endYear = 2066'i32) =
-    let version = parseOlsonVersion(versionStr)
+proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
+                            startYear, endYear: int32,
+                            timezones, regions: Option[seq[string]],
+                            formatKind: FormatKind) =
     createDir TmpDir
     removeDir ZicDir
-    removeFile dest / fmt"{$version}.bin"
+    removeFile dest
     download version
-    zic()
-    zdump dest, version, startYear, endYear
+    zic regions
+    zdump dest, version, startYear, endYear, timezones, formatKind
+
+const helpMsg = """
+Commands:
+    dump <file>          # Print info about tzdb file
+    fetch <version>      # Download and process a tzdb file
+    diff <file1> <file2> # Compare two tzdb files
+"""
 
 when isMainModule:
-    if paramCount() notin {1,2}:
-        echo "Wrong number of arguments"
-        echo "Usage: fetchtzdb <version> <dest>"
-    else:
+
+    var command: Option[Command]
+    var arguments = newSeq[string]()
+    var startYear = 1500'i32
+    var endYear = 2066'i32
+    var outfile: Option[string]
+    var timezones: Option[seq[string]]
+    var regions: Option[seq[string]]
+    var formatKind = fkBinary
+
+    for kind, key, val in getopt():
+        case kind
+        of cmdArgument:
+            if command.isNone:
+                command = some(parseEnum[Command](key))
+            else:
+                arguments.add key
+        of cmdLongOption, cmdShortOption:
+            case key
+            of "help", "h":
+                echo helpMsg
+                quit()
+            of "startYear": startYear = val.parseInt.int32
+            of "endYear": endYear = val.parseInt.int32
+            of "out": outfile = some(val)
+            of "timezones": timezones = some(val.splitWhitespace)
+            of "regions": regions = some(val.splitWhitespace)
+            of "json": formatKind = fkJson
+        of cmdEnd: assert(false) # cannot happen
+
+    if not command.isSome:
+        echo "Wrong usage."
+        echo helpMsg
+        quit()
+
+    case command.get
+    of cDump:
+        doAssert arguments.len == 1
+        let (status, db) = binformat.readFromFile(arguments[0])
+        let path = arguments[0]
+        echo ""
+        echo fmt"Meta data for file '{path}'"
+        echo ""
+        echo fmt"Version:    {db.version:>8}"
+        echo fmt"Start year: {db.startYear:>8}"
+        echo fmt"End year:   {db.endYear:>8}"
+        echo fmt"Size:       {path.getFileSize div 1000:>6}kB"
+    of cFetch: # download release
+        doAssert arguments.len == 1
         echo "Fetching and processing timezone data. This might take a while..."
-        let dest = if paramCount() == 2: paramStr(2) else: "."
-        let version = paramStr(1)
-        fetchTimezoneDatabase version, dest
+        let version = parseOlsonVersion(arguments[0])
+        let filePath = outfile.get(getCurrentDir() / ($version & ".bin"))
+        fetchTimezoneDatabase(version, filePath,
+            startYear, endYear, timezones, regions, formatKind)
+    of cDiff:
+        doAssert arguments.len == 2
+        echo "Not implemented"
+        quit(QuitFailure)
