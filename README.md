@@ -22,14 +22,14 @@ let invalid = tz"Europe/Stokholm"
 # Did you mean 'Europe/Stockholm'?
 ```
 
-## fetchtzdb
-This package also includes a tool called `fetchtzdb` for fetching the timezone database and converting it to
+## tzdb
+This package also includes a tool called `tzdb` for fetching the timezone database and converting it to
 the binary format used by `timezones`. This is not necessary for normal use since the package bundles the latest
 release (stored in the file `/tzdb/2017c.bin`), but it can be used to gain control over when the database is updated.
-Usage: `fetchtzdb <version> <dir>`. For example, `fetchtzdb 2014b .` will download version 2014b and save it to `2014b.bin` in the current directory.
+Usage: `tzdb <version> <dir>`. For example, `tzdb 2014b .` will download version 2014b and save it to `2014b.bin` in the current directory.
 
-The `fetchtzdb` tool is not supported on Windows.
+The `tzdb` tool is not supported on Windows.
 
 ## Using a custom timezone file
-Of course, downloading your own timezone file is not very useful unless you can instruct `timezone` to use it instead of the bundled one.
+Of course, downloading your own timezone file is not very useful unless you can instruct `timezones` to use it instead of the bundled one.
 To indicate that a different timezone file should be used, send the absolute path to the file as a command line define: `--define:tzdb=<path>`.

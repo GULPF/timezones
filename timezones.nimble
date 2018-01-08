@@ -5,12 +5,12 @@ author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
-skipFiles = @["fetchtzdb.nim", "tests.nim"]
-bin = @["fetchtzdb"]
+skipFiles = @["tzdb.nim", "tests.nim"]
+bin = @["tzdb"]
 
 requires "nim >= 0.17.3"
 
 # Tasks
 
-task fetchtzdb, "Fetch the timezone database":
-    exec "fetchtzdb " & paramStr(2) & " ./tzdb"
+task tzdb, "Fetch the timezone database":
+    exec "tzdb " & paramStr(2) & " ./tzdb"
