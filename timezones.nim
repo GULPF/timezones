@@ -23,24 +23,18 @@ proc initTimezone(offset: int): Timezone =
 
 template binarySeach(transitions: seq[Transition],
                      field: untyped, t: Time): int =
-    # var index = 0
-    # var count = transitions.len
-    # var step, pos: int
-    # while count != 0:
-    #     step = count div 2
-    #     pos = index + step
-    #     if transitions[pos].field < t.toUnix:
-    #         index = pos + 1
-    #         count -= step + 1
-    #     else:
-    #         count = step
-    # index
-    var res = 0
-    for i in 1..transitions.high:
-        if transitions[i].field > t.toUnix:
+
+    var lower = 0
+    var upper = transitions.high
+    while lower < upper:
+        var mid = (lower + upper) div 2
+        if transitions[mid].field >= t.toUnix:
+            upper = mid - 1
+        elif lower == mid:
             break
-        res = i
-    res
+        else:
+            lower = mid
+    lower
 
 proc initTimezone(tz: InternalTimezone): Timezone =
     # xxx it might be bad to keep the transitions in the closure,
