@@ -22,43 +22,80 @@ proc initTimezone(offset: int): Timezone =
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
 template binarySeach(transitions: seq[Transition],
-                     field: untyped, t: Time): Transition =
-    var index = 0
-    var count = transitions.len
-    var step, pos: int
-    while count != 0:
-        step = count div 2
-        pos = index + step
-        if transitions[pos].field < t.toUnix:
-            index = pos + 1
-            count -= step + 1
-        else:
-            count = step
-    transitions[index]
+                     field: untyped, t: Time): int =
+    # var index = 0
+    # var count = transitions.len
+    # var step, pos: int
+    # while count != 0:
+    #     step = count div 2
+    #     pos = index + step
+    #     if transitions[pos].field < t.toUnix:
+    #         index = pos + 1
+    #         count -= step + 1
+    #     else:
+    #         count = step
+    # index
+    var res = 0
+    for i in 1..transitions.high:
+        if transitions[i].field > t.toUnix:
+            break
+        res = i
+    res
 
 proc initTimezone(tz: InternalTimezone): Timezone =
-
+    # xxx it might be bad to keep the transitions in the closure,
+    # since they're so many.
+    # Probably better if the closure keeps a small reference to the index in the
+    # shared db.
     proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
-        let transition = tz.transitions.binarySeach(startAdj, adjTime)
+        let index = tz.transitions.binarySeach(startAdj, adjTime)
+
+        let transition = tz.transitions[index]
+
+        if index < tz.transitions.high:
+            let current = tz.transitions[index]
+            let next = tz.transitions[index + 1]
+            let offsetDiff = next.utcOffset - current.utcOffset
+            # This means that we are in the invalid time between two transitions
+            if adjTime.toUnix > next.startAdj - offsetDiff:
+                result.isDst = next.isDst
+                result.utcOffset = -next.utcOffset
+                result.adjTime = adjTime +
+                    initDuration(seconds = offsetDiff)
+                return
+
         result.isDst = transition.isDst
-        result.utcOffset = transition.utcOffset
+        result.utcOffset = -transition.utcOffset
         result.adjTime = adjTime
 
+        if index != 0:
+            let prevTransition = tz.transitions[index - 1]
+            let offsetDiff = transition.utcOffset - prevTransition.utcOffset
+            let adjUnix = adjTime.toUnix
+
+            if offsetDiff < 0:
+                # Times in this interval are ambigues
+                # Resolved by picking earlier transition
+                if transition.startAdj <= adjUnix and
+                        adjUnix < transition.startAdj - offsetDiff:
+                    result.isDst = prevTransition.isDst
+                    result.utcOffset = -prevTransition.utcOffset
+                
     proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.} =
-        let transition = tz.transitions.binarySeach(startUtc, time)
+        let transition = tz.transitions[tz.transitions.binarySeach(startUtc, time)]
         result.isDst = transition.isDst
-        result.utcOffset = transition.utcOffset
+        result.utcOffset = -transition.utcOffset
         result.adjTime = time + initDuration(seconds = transition.utcOffset)
 
     result.name = tz.name
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
-proc staticOffset*(hours, minutes, seconds: int = 0): Timezone =
+proc staticTz*(hours, minutes, seconds: int = 0): Timezone =
     ## Create a timezone using a static offset from UTC.
     runnableExamples:
         import times
-        let tz = staticOffset(hours = -2, minutes = -30)
+        let tz = staticTz(hours = -2, minutes = -30)
         let dt = initDateTime(1, mJan, 2000, 12, 00, 00, tz)
         doAssert $dt == "2000-01-01T12:00:00+02:30"
 
@@ -97,26 +134,26 @@ proc resolveTimezone(name: string): tuple[exists: bool, candidate: string] =
                 bestDistance = distance
     return (false, bestCandidate)
 
-proc timezoneImpl(name: string): Timezone =
+proc tzImpl(name: string): Timezone =
     # xxx make it a hashtable or something
     for tz in timezoneDatabase.timezones:
         if tz.name == name:
             result = initTimezone(tz)
 
-proc timezone*(name: string): Timezone {.inline.} =
+proc tz*(name: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
     runnableExamples:
-        let sweden = timezone("Europe/Stockholm")
+        let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00-01:12"
 
-    result = timezoneImpl name
+    result = tzImpl name
 
-proc timezone*(name: static[string]): Timezone {.inline.} =
+proc tz*(name: static[string]): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
     ## Validates the timezone name during compile time.
     runnableExamples:
-        let sweden = timezone("Europe/Stockholm")
+        let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00-01:12"
 
@@ -125,7 +162,7 @@ proc timezone*(name: static[string]): Timezone {.inline.} =
         {.fatal: "Timezone not found: '" & name &
             "'.\nDid you mean '" & resolved.candidate & "'?".}
     
-    result = timezoneImpl name
+    result = tzImpl name
 
 const TzdbMetadata* = (
     year: staticDatabase.version.year,

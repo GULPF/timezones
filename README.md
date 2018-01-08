@@ -8,16 +8,16 @@ It doesn't work with Nim devel yet, https://github.com/nim-lang/Nim/pull/7033 is
 import times
 import timezones
 
-let tz = staticOffset(hours = -2, minutes = -30)
+let tz = staticTz(hours = -2, minutes = -30)
 echo initDateTime(1, mJan, 2000, 12, 00, 00, tz)
 # => 2000-01-01T12:00:00+02:30
 
-let sweden = timezone("Europe/Stockholm")
+let sweden = tz"Europe/Stockholm"
 echo initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
 # => 1850-01-01T00:00:00-01:12
 
 # Compile time validation of timezone names
-let invalid = timezone("Europe/Stokholm")
+let invalid = tz"Europe/Stokholm"
 # Error: Timezone not found: 'Europe/Stokholm'.
 # Did you mean 'Europe/Stockholm'?
 ```
