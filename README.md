@@ -14,7 +14,7 @@ echo initDateTime(1, mJan, 2000, 12, 00, 00, tz)
 
 let sweden = tz"Europe/Stockholm"
 echo initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
-# => 1850-01-01T00:00:00-01:12
+# => 1850-01-01T00:00:00+01:12
 
 # Compile time validation of timezone names
 let invalid = tz"Europe/Stokholm"
