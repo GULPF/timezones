@@ -3,7 +3,7 @@ import strutils
 import timezones/private/binformat
 
 # xxx the silly default path is because it's relative to "binformat.nim"
-const tzdbpath {.strdefine.} = "../../tzdb/2017c.bin"
+const embedTzdb {.strdefine.} = "../../tzdb/2017c.bin"
 
 proc initTimezone(offset: int): Timezone =
 
@@ -85,7 +85,7 @@ proc initTimezone(tz: InternalTimezone): Timezone =
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
-proc staticTz*(hours, minutes, seconds: int = 0): Timezone =
+proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     ## Create a timezone using a static offset from UTC.
     runnableExamples:
         import times
@@ -97,6 +97,12 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone =
     result = initTimezone(offset)
 
 const read = binformat.staticReadFromFile tzdbpath
+
+# Future improvements:
+#  - Put all transitions in an array[int, array[int, Transition]]
+#  - Put names in a HashTable[string, int]
+#  - In the timezone closure, only keep the tz index around.
+#    Note that reading the transitions is gcsafe.
 
 when read.status == rsSuccess:
     const staticDatabase = read.payload

@@ -32,4 +32,4 @@ The `tzdb` tool is not supported on Windows.
 
 ## Using a custom timezone file
 Of course, downloading your own timezone file is not very useful unless you can instruct `timezones` to use it instead of the bundled one.
-To indicate that a different timezone file should be used, send the absolute path to the file as a command line define: `--define:tzdb=<path>`.
+To indicate that a different timezone file should be used, send the __absolute__ path to the file as a command line define: `--define:embedTzdb=<path>`.
