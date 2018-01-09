@@ -16,7 +16,6 @@ type
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
 const ZicDir = TmpDir / "binary"
-const DumpDir = TmpDir / "textdump"
 
 const DefaultRegions = @[
     "africa", "antarctica", "asia", "australasia", "etcetera",
@@ -196,7 +195,12 @@ when isMainModule:
         doAssert arguments.len == 1
         echo "Fetching and processing timezone data. This might take a while..."
         let version = parseOlsonVersion(arguments[0])
-        let filePath = outfile.get(getCurrentDir() / ($version & ".bin"))
+        let extension =
+            if fk == fkJson:
+                ".json.bin"
+            else:
+                ".bin"
+        let filePath = outfile.get(getCurrentDir() / ($version & extension))
         fetchTimezoneDatabase(version, filePath,
             startYear, endYear, timezones, regions, formatKind)
     of cDiff:

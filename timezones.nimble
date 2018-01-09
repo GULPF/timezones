@@ -13,4 +13,6 @@ requires "nim >= 0.17.3"
 # Tasks
 
 task tzdb, "Fetch the timezone database":
-    exec "tzdb fetch" & paramStr(2) & " --out ./bundled_tzdb_file/" & paramStr(2) & ".bin"
+    exec "tzdb fetch " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".bin"
+    exec "tzdb fetch " & paramStr(2) & " --json --out:./bundled_tzdb_files/" & paramStr(2) & ".json.bin"
+    

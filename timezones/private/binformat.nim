@@ -1,8 +1,10 @@
 import streams
 import times
 import strutils
-import os
 import json
+
+when not defined(JS):
+    import os
 
 type
     Transition* = object {.packed.}
@@ -53,6 +55,7 @@ type
         rsSuccess # intentionally the default value
         rsFileDoesNotExist
         rsIncorrectFormatVersion
+        rsExpectedJsonFormat
 
     ReadResult*[T: OlsonDatabase|StaticOlsonDataBase] = tuple
         status: ReadStatus
@@ -66,6 +69,10 @@ const HeaderSize = 32'i32
 const CurrentHeaderSize = 17'i32
 
 const HeaderPadding = newString(HeaderSize - CurrentHeaderSize)
+
+template cproc(def: untyped) =
+    when not defined(JS):
+        def
 
 # Need this information in VM. Counted manually :-)
 # proc sizeOf(typ: typedesc[Transition]): int = 21
@@ -84,7 +91,7 @@ proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
     result.endYear = endYear
     result.timezones = zones
 
-proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) =
+proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     let fs = newFileStream(path, fmWrite)
     defer: fs.close
     fs.write Version
@@ -107,7 +114,7 @@ proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) =
             fs.write json.len.int32
             fs.write json
 
-proc readFromFile*(path: string): ReadResult[OlsonDatabase] =
+proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
     if not path.fileExists:
         result.status = rsFileDoesNotExist
         return
@@ -153,7 +160,8 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] =
 {.push compileTime.}
 
 proc castToInt32(str: string): int32 =
-    when cpuEndian == littleEndian:
+    ## xxx this is terrible, it will break when using JS with a file in bigEndian
+    when cpuEndian == littleEndian or defined(JS):
         result = (str[3].int32 shl 24) or
             (str[2].int32 shl 16) or (str[1].int32 shl 8) or str[0].int32
     else:
@@ -169,14 +177,15 @@ proc eatChar(str: string, index: var int): char =
     index.inc
 
 proc eatStr(str: string, len: int, index: var int): string =
-    result = str[index..(index + len - 1)]
+    # VM complains for large json tzdb files if a slice is used here :/
+    result = str.substr(index, index + len - 1)
     index.inc len
 
 proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     # if not path.fileExists:
     #     result.status = rsFileDoesNotExist
     #     return
-    
+
     let content = staticRead path    
     var i = 0
 
@@ -192,10 +201,15 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     i.inc HeaderPadding.len
     result.payload.timezones = @[]
 
+    if defined(JS) and result.payload.fk != fkJson:
+        result.status = rsExpectedJsonFormat
+        return
+
     while i < content.len:
         let nameLen = content.eatI32(i)
         let name = content.eatStr(nameLen, i)
         let transitionsSize = content.eatI32(i)
+
         result.payload.timezones.add StaticInternalTimezone(
             name: name,
             transitions: content.eatStr(transitionsSize, i)
@@ -205,30 +219,44 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
 
 # This finishes the parsing during runtime.
 
+proc parseJsonTransitions(db: StaticOlsonDataBase,
+                          result: var OlsonDatabase) =
+    assert db.fk == fkJson
+    for zone in db.timezones:
+        result.timezones.add InternalTimezone(
+            name: zone.name,
+            transitions: parseJson(zone.transitions).to(seq[Transition])
+        )
+
+proc parseBinaryTransitions(db: StaticOlsonDataBase,
+                            result: var OlsonDatabase) {.cproc.} =
+    assert db.fk == fkBinary
+    for zone in db.timezones:
+        let stream = newStringStream(zone.transitions)
+        defer: stream.close
+        let transitionsLen = zone.transitions.len div sizeof(Transition)
+        var transitions = newSeq[Transition](transitionsLen)
+
+        for i in 0..<transitionsLen:
+            var transition: Transition
+            discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
+            transitions[i] = transition
+
+        result.timezones.add InternalTimezone(
+            name: zone.name,
+            transitions: transitions
+        )
+
 proc finalize*(db: StaticOlsonDataBase): OlsonDatabase =
     result.version = db.version
     result.timezones = @[]
 
-    case db.fk
-    of fkBinary:
-        for zone in db.timezones:
-            let stream = newStringStream(zone.transitions)
-            defer: stream.close
-            let transitionsLen = zone.transitions.len div sizeof(Transition)
-            var transitions = newSeq[Transition](transitionsLen)
-
-            for i in 0..<transitionsLen:
-                var transition: Transition
-                discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
-                transitions[i] = transition
-
-            result.timezones.add InternalTimezone(
-                name: zone.name,
-                transitions: transitions
-            )
-    of fkJson:
-        for zone in db.timezones:
-            result.timezones.add InternalTimezone(
-                name: zone.name,
-                transitions: parseJson(zone.transitions).to(seq[Transition])
-            )
+    when defined(JS):
+        assert db.fk == fkJson
+        parseJsonTransitions(db, result)
+    else:
+        case db.fk
+        of fkBinary:
+            parseBinaryTransitions(db, result)
+        of fkJson:
+            parseJsonTransitions(db, result)
