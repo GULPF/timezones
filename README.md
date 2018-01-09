@@ -1,7 +1,7 @@
 The `timezones` module implements methods for working with timezones. It uses the [IANA time zone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone transitions. It's still in an early stage
 and the API is likely to change.
 
-It doesn't work with Nim devel yet, https://github.com/nim-lang/Nim/pull/7033 is required.
+It doesn't work with Nim devel yet, https://github.com/nim-lang/Nim/pull/7033 and https://github.com/nim-lang/Nim/pull/6978 is required.
 
 ## Usage
 ```nim
@@ -26,10 +26,29 @@ let invalid = tz"Europe/Stokholm"
 This package also includes a tool called `tzdb` for fetching the timezone database and converting it to
 the binary format used by `timezones`. This is not necessary for normal use since the package bundles the latest
 release (stored in the file `/bundled_tzdb_file/2017c.bin`), but it can be used to gain control over when the database is updated.
-Usage: `tzdb <version> <dir>`. For example, `tzdb 2014b .` will download version 2014b and save it to `2014b.bin` in the current directory.
+
+Usage (`tzdb --help`):
+ ```
+Commands:
+    dump  <file>          # Print info about a tzdb file
+    fetch <version>       # Download and process a tzdb file
+    diff  <file1> <file2> # Compare two tzdb files (not implemented)
+    --help                # Print this help message
+
+Fetch parameters:
+    --startYear:<year>    # Only store transitions starting from this year.
+    --endYear:<year>      # Only store transitions until this year.
+    --out:<file>          # Write output to this file.
+    --timezones:<zones>   # Only use these timezones.
+    --regions:<regions>   # Only use these regions.
+    --json:<regions>      # Store transitions as JSON (required for JS support).
+```
+
+For example, `tzdb fetch 2017c --out:2017c.bin --startYear:1900 --endYear:2030` will create a tzdb file called `2017c.bin` containing
+timzone transitions for the years 1900 to 2030 generated from the `2017c` timezone database release.
 
 The `tzdb` tool is not supported on Windows.
 
-## Using a custom timezone file
+## Using a custom tzdb file
 Of course, downloading your own timezone file is not very useful unless you can instruct `timezones` to use it instead of the bundled one.
 To indicate that a different timezone file should be used, send the __absolute__ path to the file as a command line define: `--define:embedTzdb=<path>`.
