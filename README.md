@@ -25,7 +25,7 @@ let invalid = tz"Europe/Stokholm"
 ## tzdb
 This package also includes a tool called `tzdb` for fetching the timezone database and converting it to
 the binary format used by `timezones`. This is not necessary for normal use since the package bundles the latest
-release (stored in the file `/tzdb/2017c.bin`), but it can be used to gain control over when the database is updated.
+release (stored in the file `/bundled_tzdb_file/2017c.bin`), but it can be used to gain control over when the database is updated.
 Usage: `tzdb <version> <dir>`. For example, `tzdb 2014b .` will download version 2014b and save it to `2014b.bin` in the current directory.
 
 The `tzdb` tool is not supported on Windows.

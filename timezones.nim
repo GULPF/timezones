@@ -3,7 +3,7 @@ import strutils
 import timezones/private/binformat
 
 # xxx the silly default path is because it's relative to "binformat.nim"
-const embedTzdb {.strdefine.} = "../../tzdb/2017c.bin"
+const embedTzdb {.strdefine.} = "../../bundled_tzdb_file/2017c.bin"
 
 proc initTimezone(offset: int): Timezone =
 
