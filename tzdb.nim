@@ -7,6 +7,7 @@ import strutils
 import times
 import options
 import parseopt2
+import tables
 import timezones/private/binformat
 
 type
@@ -36,7 +37,8 @@ proc zic(regions: Option[seq[string]]) =
     let files = regions.get(DefaultRegions).mapIt(UnpackDir / it).join(" ")
     discard execProcess fmt"zic -d {ZicDir} {files}"
 
-proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezone]) =
+proc processZdumpZone(tzname, content: string,
+                      appendTo: var Table[string, InternalTimezone]) =
     var lineIndex = -1
     var timezone = InternalTimezone(name: tzname, transitions: @[])
 
@@ -59,12 +61,12 @@ proc processZdumpZone(tzname, content: string, appendTo: var seq[InternalTimezon
             utcOffset: offset.int32
         )
 
-    appendTo.add timezone
+    appendTo[tzname] = timezone
 
 proc zdump(dest: string, version: OlsonVersion,
            startYear, endYear: int32, timezones: Option[seq[string]],
            formatKind: FormatKind) =
-    var zones = newSeq[InternalTimezone]()
+    var zones = initTable[string, InternalTimezone]()
 
     for tzfile in walkDirRec(ZicDir, {pcFile}):
         let content = execProcess fmt"zdump -v -c {startYear},{endYear} {tzfile}"

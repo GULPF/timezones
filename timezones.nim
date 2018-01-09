@@ -1,5 +1,6 @@
 import times
 import strutils
+import tables
 import timezones/private/binformat
 
 # type
@@ -55,7 +56,7 @@ template binarySeach(transitions: seq[Transition],
             lower = mid
     lower
 
-proc initTimezone*(tz: InternalTimezone): Timezone =
+proc initTimezone(tz: InternalTimezone): Timezone =
     # xxx it might be bad to keep the transitions in the closure,
     # since they're so many.
     # Probably better if the closure keeps a small reference to the index in the
@@ -146,21 +147,15 @@ proc resolveTimezone(name: string): tuple[exists: bool, candidate: string] =
     var bestCandidate: string
     var bestDistance = high(int)
     for tz in staticDatabase.timezones:
-        if tz.name == name:
+        let candidate = tz.name
+        if candidate == name:
             return (true, "")
         else:
-            let distance = editDistance(tz.name, name)
+            let distance = editDistance(candidate, name)
             if distance < bestDistance:
-                bestCandidate = tz.name
+                bestCandidate = candidate
                 bestDistance = distance
     return (false, bestCandidate)
-
-proc tzImpl(name: string): Timezone =
-    # xxx make it a hashtable or something
-    for tz in timezoneDatabase.timezones:
-        if tz.name == name:
-            result = initTimezone(tz)
-            break
 
 proc tz*(name: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
@@ -169,7 +164,7 @@ proc tz*(name: string): Timezone {.inline.} =
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00-01:12"
 
-    result = tzImpl name
+    result = initTimezone(timezoneDatabase.timezones[name])
 
 proc tz*(name: static[string]): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
@@ -184,13 +179,10 @@ proc tz*(name: static[string]): Timezone {.inline.} =
         {.fatal: "Timezone not found: '" & name &
             "'.\nDid you mean '" & resolved.candidate & "'?".}
     
-    result = tzImpl name
+    result = initTimezone(timezoneDatabase.timezones[name])
 
 const TzdbMetadata* = (
     version: $staticDatabase.version,
     startYear: staticDatabase.startYear,
     endYear: staticDatabase.endYear
 )
-
-
-var tzz = tz"Europe/Stockholm"

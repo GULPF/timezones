@@ -6,9 +6,9 @@ let sweden = tz"Europe/Stockholm"
 const f = "yyyy-MM-dd HH:mm zzz"
 
 test "dst edge cases":
-    # # In case of an impossible time, the time is moved to after the impossible time period
+    # In case of an impossible time, the time is moved to after the impossible time period
     check initDateTime(26, mMar, 2017, 02, 30, 00, sweden).format(f) == "2017-03-26 03:30 +02:00"
-    # # In case of an ambiguous time, the earlier time is choosen
+    # In case of an ambiguous time, the earlier time is choosen
     check initDateTime(29, mOct, 2017, 02, 00, 00, sweden).format(f) == "2017-10-29 02:00 +02:00"
     # These are just dates on either side of the dst switch
     check initDateTime(29, mOct, 2017, 01, 00, 00, sweden).format(f) == "2017-10-29 01:00 +02:00"

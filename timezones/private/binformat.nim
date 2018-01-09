@@ -2,6 +2,7 @@ import streams
 import times
 import strutils
 import json
+import tables
 
 when not defined(JS):
     import os
@@ -21,7 +22,7 @@ type
     OlsonVersion* = tuple[year: int32, release: char] # E.g 2014b
 
     OlsonDatabase* = object
-        timezones*: seq[InternalTimezone]
+        timezones*: Table[string, InternalTimezone]
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
@@ -85,7 +86,7 @@ proc `$`*(version: OlsonVersion): string =
     $version.year & version.release
 
 proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
-                        zones: seq[InternalTimezone]): OlsonDatabase =
+                        zones: Table[string, InternalTimezone]): OlsonDatabase =
     result.version = version
     result.startYear = startYear
     result.endYear = endYear
@@ -101,7 +102,7 @@ proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     fs.write db.endYear
     fs.write fk.int32
     fs.write HeaderPadding
-    for zone in db.timezones:
+    for name, zone in db.timezones:
         fs.write zone.name.len.int32
         fs.write zone.name
         case fk
@@ -133,7 +134,7 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
     result.payload.endYear = fs.readInt32
     result.payload.fk = fs.readInt32().FormatKind
     discard fs.readStr HeaderPadding.len
-    result.payload.timezones = newSeq[InternalTimezone]()
+    result.payload.timezones = initTable[string, InternalTimezone]()
 
     while not fs.atEnd:
         let nameLen = fs.readInt32
@@ -150,7 +151,7 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
         of fkJson:
             transitions = parseJson(fs.readStr(transitionsLen)).to(seq[Transition])
 
-        result.payload.timezones.add InternalTimezone(
+        result.payload.timezones[name] = InternalTimezone(
             name: name,
             transitions: transitions
         )
@@ -223,7 +224,7 @@ proc parseJsonTransitions(db: StaticOlsonDataBase,
                           result: var OlsonDatabase) =
     assert db.fk == fkJson
     for zone in db.timezones:
-        result.timezones.add InternalTimezone(
+        result.timezones[zone.name] = InternalTimezone(
             name: zone.name,
             transitions: parseJson(zone.transitions).to(seq[Transition])
         )
@@ -242,14 +243,14 @@ proc parseBinaryTransitions(db: StaticOlsonDataBase,
             discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
             transitions[i] = transition
 
-        result.timezones.add InternalTimezone(
+        result.timezones[zone.name] = InternalTimezone(
             name: zone.name,
             transitions: transitions
         )
 
 proc finalize*(db: StaticOlsonDataBase): OlsonDatabase =
     result.version = db.version
-    result.timezones = @[]
+    result.timezones = initTable[string, InternalTimezone]()
 
     when defined(JS):
         assert db.fk == fkJson
