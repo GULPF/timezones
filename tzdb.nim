@@ -149,11 +149,14 @@ when isMainModule:
         echo ""
         echo fmt"Meta data for file '{path}'"
         echo ""
-        echo fmt"Version:    {db.version:>8}"
-        echo fmt"Start year: {db.startYear:>8}"
-        echo fmt"End year:   {db.endYear:>8}"
-        echo fmt"Size:       {path.getFileSize div 1000:>6}kB"
-    of cFetch: # download release
+        echo fmt"Version:             {$db.version:>8}"
+        echo fmt"Start year:          {db.startYear:>8}"
+        echo fmt"End year:            {db.endYear:>8}"
+        echo fmt"Size:                {path.getFileSize div 1000:>6}kB"
+        echo fmt"Transition format:   {$db.fk:>8}"
+        echo fmt"Number of timezones: {db.timezones.len:>8}"
+        echo ""
+    of cFetch:
         doAssert arguments.len == 1
         echo "Fetching and processing timezone data. This might take a while..."
         let version = parseOlsonVersion(arguments[0])
