@@ -100,9 +100,18 @@ proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
 
 const helpMsg = """
 Commands:
-    dump <file>          # Print info about tzdb file
-    fetch <version>      # Download and process a tzdb file
-    diff <file1> <file2> # Compare two tzdb files
+    dump  <file>          # Print info about a tzdb file
+    fetch <version>       # Download and process a tzdb file
+    diff  <file1> <file2> # Compare two tzdb files (not implemented)
+    --help                # Print this help message
+
+Fetch parameters:
+    --startYear:<year>    # Only store transitions starting from this year.
+    --endYear:<year>      # Only store transitions until this year.
+    --out:<file>          # Write output to this file.
+    --timezones:<zones>   # Only use these timezones.
+    --regions:<regions>   # Only use these regions.
+    --json:<regions>      # Store transitions as JSON (required for JS support).
 """
 
 when isMainModule:
@@ -117,24 +126,51 @@ when isMainModule:
     var formatKind = fkBinary
 
     for kind, key, val in getopt():
-        case kind
-        of cmdArgument:
-            if command.isNone:
-                command = some(parseEnum[Command](key))
-            else:
-                arguments.add key
-        of cmdLongOption, cmdShortOption:
-            case key
-            of "help", "h":
+        try:
+            case kind
+            of cmdArgument:
+                if command.isNone:
+                    command = some(parseEnum[Command](key))
+                else:
+                    arguments.add key
+            of cmdLongOption, cmdShortOption:
+                case key
+                of "help", "h":
+                    echo helpMsg
+                    quit()
+                of "startYear": startYear = val.parseInt.int32
+                of "endYear": endYear = val.parseInt.int32
+                of "out": outfile = some(val)
+                of "timezones": timezones = some(val.splitWhitespace)
+                of "regions": regions = some(val.splitWhitespace)
+                of "json": formatKind = fkJson
+                else: raise newException(ValueError, "Bad input")
+            of cmdEnd: assert(false) # cannot happen
+        except:
+            case kind
+            of cmdArgument:
+                echo fmt"Invalid command: {key}"
+                quit(QuitFailure)
+            of cmdLongOption, cmdShortOption:
+                let flag =
+                    if kind == cmdLongOption:
+                        "--" & key
+                    else:
+                        "-" & key
+
+                let value =
+                    if val == "":
+                        ""
+                    else:
+                        ":" & val
+
+                echo ""
+                echo fmt"Invalid parameter: {flag}{value}"
+                echo ""
                 echo helpMsg
-                quit()
-            of "startYear": startYear = val.parseInt.int32
-            of "endYear": endYear = val.parseInt.int32
-            of "out": outfile = some(val)
-            of "timezones": timezones = some(val.splitWhitespace)
-            of "regions": regions = some(val.splitWhitespace)
-            of "json": formatKind = fkJson
-        of cmdEnd: assert(false) # cannot happen
+                echo ""
+                quit(QuitFailure)
+            of cmdEnd: assert(false) # cannot happen            
 
     if not command.isSome:
         echo "Wrong usage."
