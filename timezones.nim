@@ -1,5 +1,6 @@
 import times
 import strutils
+import parseutils
 import tables
 import timezones/private/binformat
 
@@ -105,7 +106,7 @@ proc initTimezone(tz: InternalTimezone): Timezone =
             let adjUnix = adjTime.toUnix
 
             if offsetDiff < 0:
-                # Times in this interval are ambigues
+                # Times in this interval are ambiguous
                 # Resolved by picking earlier transition
                 if transition.startAdj <= adjUnix and
                         adjUnix < transition.startAdj - offsetDiff:
@@ -139,9 +140,10 @@ proc resolveTimezone(name: string): tuple[exists: bool, candidate: string] =
 proc tz*(name: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
     runnableExamples:
+        import times
         let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
-        doAssert $dt == "1850-01-01T00:00:00-01:12"
+        doAssert $dt == "1850-01-01T00:00:00+01:12"
 
     result = initTimezone(timezoneDatabase.timezones[name])
 
@@ -149,9 +151,10 @@ proc tz*(name: static[string]): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
     ## Validates the timezone name during compile time.
     runnableExamples:
+        import times
         let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
-        doAssert $dt == "1850-01-01T00:00:00-01:12"
+        doAssert $dt == "1850-01-01T00:00:00+01:12"
 
     const resolved = name.resolveTimezone
     when not resolved.exists:
@@ -160,19 +163,19 @@ proc tz*(name: static[string]): Timezone {.inline.} =
     
     result = initTimezone(timezoneDatabase.timezones[name])
 
-proc initTimezone(offset: int): Timezone =
+proc initTimezone(name: string, offset: int): Timezone =
 
     proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
         result.isDst = false
-        result.utcOffset = offset
+        result.utcOffset = -offset
         result.adjTime = adjTime
 
     proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.}=
         result.isDst = false
-        result.utcOffset = offset
-        result.adjTime = time + initDuration(seconds = offset)
+        result.utcOffset = -offset
+        result.adjTime = time - initDuration(seconds = offset)
 
-    result.name = ""
+    result.name = name
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
@@ -185,4 +188,19 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
         doAssert $dt == "2000-01-01T12:00:00+02:30"
 
     let offset = hours * 3600 + minutes * 60 + seconds
-    result = initTimezone(offset)
+    let hours = offset div 3600
+    var rem = offset mod 3600
+    let minutes = rem div 60
+    let seconds = rem mod 60
+    
+    let offsetStr = abs(hours).intToStr(2) &
+        ":" & abs(minutes).intToStr(2) & 
+        ":" & abs(seconds).intToStr(2)
+    
+    let name =
+        if offset > 0:
+            "STATIC[-" & offsetStr & "]"
+        else:
+            "STATIC[+" & offsetStr & "]"            
+
+    result = initTimezone(name, offset)

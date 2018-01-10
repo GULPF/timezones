@@ -24,3 +24,11 @@ test "from utc":
     let claimedOffset = initDuration(seconds = local.utcOffset)
     local.utcOffset = 0
     check claimedOffset == utc.toTime - local.toTime
+
+test "staticTz":
+    check staticTz(hours = 2).name == "STATIC[-02:00:00]"
+    check staticTz(hours = 2, minutes = 1).name == "STATIC[-02:01:00]"    
+    check staticTz(hours = 2, minutes = 1, seconds = 13).name == "STATIC[-02:01:13]"
+    let tz = staticTz(seconds = 1)
+    let dt = initDateTime(1, mJan, 2000, 00, 00, 00, tz)
+    check dt.utcOffset == -1
