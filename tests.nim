@@ -32,3 +32,10 @@ test "staticTz":
     let tz = staticTz(seconds = 1)
     let dt = initDateTime(1, mJan, 2000, 00, 00, 00, tz)
     check dt.utcOffset == -1
+
+test "large/small dates":
+    let korea = tz"Asia/Seoul"
+    let small = initDateTime(1, mJan, 0001, 00, 00, 00, korea)
+    check small.utcOffset == -30472
+    let large = initDateTIme(1, mJan, 2100, 00, 00, 00, korea)
+    check large.utcOffset == -32400

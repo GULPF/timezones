@@ -18,9 +18,12 @@ const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
 const ZicDir = TmpDir / "binary"
 
+# Note that the legacy regions "backward" and etcetera"
+# are not included by default. They can still be included
+# by using the `--regions` parameter.
 const DefaultRegions = @[
-    "africa", "antarctica", "asia", "australasia", "etcetera",
-    "europe", "northamerica", "southamerica", "pacificnew", "backward"
+    "africa", "antarctica", "asia", "australasia",
+    "europe", "northamerica", "southamerica", "pacificnew"
 ]
 
 proc download(version: OlsonVersion) =
@@ -115,36 +118,48 @@ Fetch parameters:
     --json:<regions>      # Store transitions as JSON (required for JS support).
 """
 
-when isMainModule:
+type
+    CliOptions = object
+        command: Command
+        arguments: seq[string]
+        startYear: int32
+        endYear: int32
+        outfile: Option[string]
+        timezones: Option[seq[string]]
+        regions: Option[seq[string]]
+        formatKind: FormatKind
 
-    var command: Option[Command]
-    var arguments = newSeq[string]()
-    var startYear = 1500'i32
-    var endYear = 2066'i32
-    var outfile: Option[string]
-    var timezones: Option[seq[string]]
-    var regions: Option[seq[string]]
-    var formatKind = fkBinary
+const DefaultOptions = CliOptions(
+    arguments: newSeq[string](),
+    startYear: 1500,
+    endYear: 2066,
+    formatKind: fkBInary
+)
+
+proc getCliOptions(): CliOptions =
+    result = DefaultOptions
+    var hasCommand = false
 
     for kind, key, val in getopt():
         try:
             case kind
             of cmdArgument:
-                if command.isNone:
-                    command = some(parseEnum[Command](key))
+                if not hasCommand:
+                    result.command = parseEnum[Command](key)
+                    hasCommand = true
                 else:
-                    arguments.add key
+                    result.arguments.add key
             of cmdLongOption, cmdShortOption:
                 case key
                 of "help", "h":
                     echo helpMsg
                     quit()
-                of "startYear": startYear = val.parseInt.int32
-                of "endYear": endYear = val.parseInt.int32
-                of "out": outfile = some(val)
-                of "timezones": timezones = some(val.splitWhitespace)
-                of "regions": regions = some(val.splitWhitespace)
-                of "json": formatKind = fkJson
+                of "startYear": result.startYear = val.parseInt.int32
+                of "endYear": result.endYear = val.parseInt.int32
+                of "out": result.outfile = some(val)
+                of "timezones": result.timezones = some(val.splitWhitespace)
+                of "regions": result.regions = some(val.splitWhitespace)
+                of "json": result.formatKind = fkJson
                 else: raise newException(ValueError, "Bad input")
             of cmdEnd: assert(false) # cannot happen
         except:
@@ -173,16 +188,20 @@ when isMainModule:
                 quit(QuitFailure)
             of cmdEnd: assert(false) # cannot happen            
 
-    if not command.isSome:
+    if not hasCommand:
         echo "Wrong usage."
         echo helpMsg
         quit()
 
-    case command.get
+when isMainModule:
+
+    var opts = getCliOptions()
+
+    case opts.command
     of cDump:
-        doAssert arguments.len == 1
-        let (status, db) = binformat.readFromFile(arguments[0])
-        let path = arguments[0]
+        doAssert opts.arguments.len == 1
+        let (status, db) = binformat.readFromFile(opts.arguments[0])
+        let path = opts.arguments[0]
         echo ""
         echo fmt"Meta data for file '{path}'"
         echo ""
@@ -194,18 +213,19 @@ when isMainModule:
         echo fmt"Number of timezones: {db.timezones.len:>8}"
         echo ""
     of cFetch:
-        doAssert arguments.len == 1
+        doAssert opts.arguments.len == 1
         echo "Fetching and processing timezone data. This might take a while..."
-        let version = parseOlsonVersion(arguments[0])
+        let version = parseOlsonVersion(opts.arguments[0])
         let extension =
-            if fk == fkJson:
+            if opts.formatKind == fkJson:
                 ".json.bin"
             else:
                 ".bin"
-        let filePath = outfile.get(getCurrentDir() / ($version & extension))
-        fetchTimezoneDatabase(version, filePath,
-            startYear, endYear, timezones, regions, formatKind)
+        let defaultFilePath = getCurrentDir() / ($version & extension)
+        let filePath = opts.outfile.get(defaultFilePath)
+        fetchTimezoneDatabase(version, filePath, opts.startYear,
+            opts.endYear, opts.timezones, opts.regions, opts.formatKind)
     of cDiff:
-        doAssert arguments.len == 2
+        doAssert opts.arguments.len == 2
         echo "Not implemented"
         quit(QuitFailure)
