@@ -1,4 +1,3 @@
-import streams
 import times
 import strutils
 import json
@@ -6,9 +5,10 @@ import tables
 
 when not defined(JS):
     import os
+    import streams
 
 type
-    Transition* = object {.packed.}
+    Transition* = object {.packed.} # Packed so that it can be read/written directly.
         startUtc*: int64  ## Seconds since 1970-01-01 UTC when transition starts
         startAdj*: int64  ## Seconds since 1970-01-01, in the transitions timezone,
                           ## when the transition starts
@@ -23,10 +23,22 @@ type
 
     OlsonDatabase* = object
         timezones*: Table[string, InternalTimezone]
+        locations*: Table[string, Location]
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
         fk*: FormatKind
+
+    Coordinate* = tuple
+        longitude: int32
+        latitude: int32
+
+    CountryCode* = distinct string # Two letter country code, e.g SE for Sweden
+
+    Location* = object
+        name*: string
+        cc*: seq[CountryCode]
+        position*: Coordinate
 
     # Casting `string` to `Transition` isn't possible in JS,
     # so for that backend we need to store the transitions as JSON.
@@ -44,6 +56,7 @@ type
 
     StaticOlsonDataBase* = object
         timezones*: seq[StaticInternalTimezone]
+        locations*: seq[Location]
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
@@ -63,7 +76,7 @@ type
         payload: T
 
 # The current version of the binary format
-const Version = 3'i32
+const Version = 4'i32
 # Header uses 32 bytes.
 const HeaderSize = 32'i32
 # The header size used by this version.
@@ -75,9 +88,6 @@ template cproc(def: untyped) =
     when not defined(JS):
         def
 
-# Need this information in VM. Counted manually :-)
-# proc sizeOf(typ: typedesc[Transition]): int = 21
-
 proc parseOlsonVersion*(versionStr: string): OlsonVersion =
     result.year = versionStr[0..3].parseInt.int32
     result.release = versionStr[4]
@@ -85,12 +95,30 @@ proc parseOlsonVersion*(versionStr: string): OlsonVersion =
 proc `$`*(version: OlsonVersion): string =
     $version.year & version.release
 
+proc `$`*(cc: CountryCode): string {.borrow.}
+
+proc splitCountryCodes(str: string): seq[CountryCode] =
+    result = newSeq[CountryCode](str.len div 2)
+    for i in countup(0, str.high, 2):
+        result[i div 2] = (str[i] & str[i + 1]).CountryCode
+
+proc initLocation*(name: string, position: Coordinate, cc: seq[CountryCode]): Location =
+    result.name = name
+    result.position = position
+    result.cc = cc
+
 proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
-                        zones: Table[string, InternalTimezone]): OlsonDatabase =
+                        zones: Table[string, InternalTimezone],
+                        locations: Table[string, Location]): OlsonDatabase =
     result.version = version
     result.startYear = startYear
     result.endYear = endYear
     result.timezones = zones
+    result.locations = locations
+
+proc readStr(s: Stream): string {.cproc.} =
+    let len = s.readInt32
+    result = s.readStr(len)
 
 proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     let fs = newFileStream(path, fmWrite)
@@ -102,6 +130,16 @@ proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     fs.write db.endYear
     fs.write fk.int32
     fs.write HeaderPadding
+
+    fs.write db.locations.len.int32
+    for name, location in db.locations:
+        fs.write name.len.int32
+        fs.write name
+        fs.write location.cc.len.int32 * 2 # Nbr of bytes, not nbr of cc
+        fs.write location.cc.join("")
+        fs.write location.position.latitude
+        fs.write location.position.longitude
+
     for name, zone in db.timezones:
         fs.write zone.name.len.int32
         fs.write zone.name
@@ -135,10 +173,16 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
     result.payload.fk = fs.readInt32().FormatKind
     discard fs.readStr HeaderPadding.len
     result.payload.timezones = initTable[string, InternalTimezone]()
+    result.payload.locations = initTable[string, Location]()
+
+    for i in 0..<fs.readInt32:
+        let name = fs.readStr
+        let cc = fs.readStr.splitCountryCodes
+        let pos = (fs.readInt32, fs.readInt32)
+        result.payload.locations[name] = initLocation(name, pos, cc)
 
     while not fs.atEnd:
-        let nameLen = fs.readInt32
-        let name = fs.readStr nameLen
+        let name = fs.readStr
         let transitionsLen = fs.readInt32
         var transitions = newSeq[Transition](transitionsLen)
 
@@ -182,6 +226,11 @@ proc eatStr(str: string, len: int, index: var int): string =
     result = str.substr(index, index + len - 1)
     index.inc len
 
+proc eatStr(str: string, index: var int): string =
+    ## Assumes that the string field is prepended by a len field.
+    let len = str.eatI32(index)
+    result = str.eatStr(len, index)
+
 proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     # if not path.fileExists:
     #     result.status = rsFileDoesNotExist
@@ -201,19 +250,24 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     result.payload.fk = content.eatI32(i).FormatKind
     i.inc HeaderPadding.len
     result.payload.timezones = @[]
+    result.payload.locations = @[]
 
     if defined(JS) and result.payload.fk != fkJson:
         result.status = rsExpectedJsonFormat
         return
 
-    while i < content.len:
-        let nameLen = content.eatI32(i)
-        let name = content.eatStr(nameLen, i)
-        let transitionsSize = content.eatI32(i)
+    for _ in 0..<content.eatI32(i):
+        let name = content.eatStr(i)
+        let cc = content.eatStr(i).splitCountryCodes
+        let pos = (content.eatI32(i), content.eatI32(i))
+        result.payload.locations.add initLocation(name, pos, cc)
 
+    while i < content.len:
+        let name = content.eatStr(i)
+        let transitions = content.eatStr(i)
         result.payload.timezones.add StaticInternalTimezone(
             name: name,
-            transitions: content.eatStr(transitionsSize, i)
+            transitions: transitions
         )
 
 {.pop.}
@@ -251,6 +305,10 @@ proc parseBinaryTransitions(db: StaticOlsonDataBase,
 proc finalize*(db: StaticOlsonDataBase): OlsonDatabase =
     result.version = db.version
     result.timezones = initTable[string, InternalTimezone]()
+    result.locations = initTable[string, Location]()
+
+    for loc in db.locations:
+        result.locations[loc.name] = loc
 
     when defined(JS):
         assert db.fk == fkJson

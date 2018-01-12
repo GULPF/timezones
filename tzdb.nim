@@ -66,10 +66,9 @@ proc processZdumpZone(tzname, content: string,
 
     appendTo[tzname] = timezone
 
-proc zdump(dest: string, version: OlsonVersion,
-           startYear, endYear: int32, timezones: Option[seq[string]],
-           formatKind: FormatKind) =
-    var zones = initTable[string, InternalTimezone]()
+proc zdump(startYear, endYear: int32,
+           tznames: Option[seq[string]]): Table[string, InternalTimezone] =
+    result = initTable[string, InternalTimezone]()
 
     for tzfile in walkDirRec(ZicDir, {pcFile}):
         let content = execProcess fmt"zdump -v -c {startYear},{endYear} {tzfile}"
@@ -83,24 +82,52 @@ proc zdump(dest: string, version: OlsonVersion,
                 let country = dir.extractFilename
                 country & "/" & city # E.g Europe/Stockholm
         
-        if timezones.isSome and tzname notin timezones.get:
+        if tznames.isSome and tzname notin tznames.get:
             continue
 
-        processZdumpZone(tzname, content, appendTo = zones)
+        processZdumpZone(tzname, content, appendTo = result)
 
-    let db = initOlsonDatabase(version, startYear, endYear, zones)
-    db.saveToFile(dest, formatKind)
+proc parseCoordinate(str: string): Coordinate =
+    var lat = $str[0]
+    var lon = ""
+    var i = 1
+    
+    while str[i] in Digits:
+        lat.add str[i]
+        i.inc
+    lon = str[i..^1]
+
+    result = (lat.parseInt.int32, lon.parseInt.int32)
+
+proc zone1970(zones: Table[string, InternalTimezone]): Table[string, Location] =
+    ## Parsed the ``zone1970.tab`` file and returns the locations.
+    ## Only returns the locations referenced by ``zones``.
+    result = initTable[string, Location]()
+
+    for line in lines(UnpackDir / "zone1970.tab"):
+        if line[0] == '#': continue
+        let tokens = line.split '\t'
+        let (ccStr, coordStr, tzname) = (tokens[0], tokens[1], tokens[2])
+        if tzname notin zones: continue
+
+        let position = parseCoordinate(coordStr)
+        let cc = ccStr.split(',').mapIt(it.CountryCode)
+
+        result[tzname] = initLocation(tzname, position, cc)
 
 proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
                             startYear, endYear: int32,
-                            timezones, regions: Option[seq[string]],
+                            tznames, regions: Option[seq[string]],
                             formatKind: FormatKind) =
     createDir TmpDir
     removeDir ZicDir
     removeFile dest
     download version
     zic regions
-    zdump dest, version, startYear, endYear, timezones, formatKind
+    let zones = zdump(startYear, endYear, tznames)
+    let locations = zone1970(zones)
+    let db = initOlsonDatabase(version, startYear, endYear, zones, locations)
+    db.saveToFile(dest, formatKind)
 
 const helpMsg = """
 Commands:
@@ -125,7 +152,7 @@ type
         startYear: int32
         endYear: int32
         outfile: Option[string]
-        timezones: Option[seq[string]]
+        tznames: Option[seq[string]]
         regions: Option[seq[string]]
         formatKind: FormatKind
 
@@ -157,7 +184,7 @@ proc getCliOptions(): CliOptions =
                 of "startYear": result.startYear = val.parseInt.int32
                 of "endYear": result.endYear = val.parseInt.int32
                 of "out": result.outfile = some(val)
-                of "timezones": result.timezones = some(val.splitWhitespace)
+                of "timezones": result.tznames = some(val.splitWhitespace)
                 of "regions": result.regions = some(val.splitWhitespace)
                 of "json": result.formatKind = fkJson
                 else: raise newException(ValueError, "Bad input")
@@ -211,6 +238,7 @@ when isMainModule:
         echo fmt"Size:                {path.getFileSize div 1000:>6}kB"
         echo fmt"Transition format:   {$db.fk:>8}"
         echo fmt"Number of timezones: {db.timezones.len:>8}"
+        echo fmt"Number of locations: {db.locations.len:>8}"
         echo ""
     of cFetch:
         doAssert opts.arguments.len == 1
@@ -224,7 +252,7 @@ when isMainModule:
         let defaultFilePath = getCurrentDir() / ($version & extension)
         let filePath = opts.outfile.get(defaultFilePath)
         fetchTimezoneDatabase(version, filePath, opts.startYear,
-            opts.endYear, opts.timezones, opts.regions, opts.formatKind)
+            opts.endYear, opts.tznames, opts.regions, opts.formatKind)
     of cDiff:
         doAssert opts.arguments.len == 2
         echo "Not implemented"
