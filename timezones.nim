@@ -2,6 +2,7 @@ import times
 import strutils
 import parseutils
 import tables
+import macros
 import timezones/private/binformat
 
 # Future improvements:
@@ -11,20 +12,13 @@ import timezones/private/binformat
 #    Note that reading the transitions is gcsafe.
 
 # type
-#     TimezoneId = int
-
-#     TimezoneDefinition = object
-#         id: TimezoneId
-
 #     DateTimeClass = enum
 #         Unknown, Valid, Invalid, Ambiguous
-
-
 # # Check C# for naming.
-# proc isAmbiguous(tzd: TimezoneDefinition, ndt: NaiveDateTime): bool = discard
-# proc isValid(tzd: TimezoneDefinition, ndt: NaiveDateTime): bool = discard
-# proc hasDst(tzd: TimezoneDefinition): bool = discard
-# proc classify(tzd: TimezoneDefinition, ndt: NaiveDateTIme): DateTimeClass = discard
+# proc isAmbiguous(tz: Timezone, ndt: NaiveDateTime): bool = discard
+# proc isValid(tz: Timezone, ndt: NaiveDateTime): bool = discard
+# proc hasDst(tz: Timezone): bool = discard
+# proc classify(tz: Timezone, ndt: NaiveDateTIme): DateTimeClass = discard
 
 # xxx the silly default path is because it's relative to "binformat.nim"
 when defined(JS):
@@ -52,13 +46,57 @@ elif read.status == rsExpectedJsonFormat:
         "To use a custom tzdb file on the JS backend it must be created " &
         "using the `--json` flag.".}
 
-let timezoneDatabase = staticDatabase.finalize
+macro createCountryCodeEnum(countryCodes: static[seq[string]]): untyped =
+    var enumValues = newSeq[NimNode]()
+    
+    for cc in countryCodes:
+        enumValues.add newIdentNode($cc)
 
+    nnkTypeSection.newTree(
+        nnkTypeDef.newTree(
+            nnkPostfix.newTree(
+                newIdentNode("*"),
+                newIdentNode("CountryCode")
+            ),
+            newEmptyNode(),
+            nnkEnumTy.newTree(@[newEmptyNode()] & enumValues)
+        )
+    )
+
+createCountryCodeEnum(staticDatabase.ccs)
+let timezoneDatabase = finalize[CountryCode](staticDatabase)
+
+const v = $staticDatabase.version
 const TzdbMetadata* = (
-    version: $staticDatabase.version,
+    version: v,
     startYear: staticDatabase.startYear,
     endYear: staticDatabase.endYear
-)
+) ## Meta data about the tzdb file.
+  ## These values will depend on what parameters was used when creating the tzdb file.
+
+proc countries*(tzname: string): set[CountryCode] =
+    ## Get a list of countries that are known to use ``tzname``.
+    ## The result might be empty. Note that some countries use
+    ## multiple timezones.
+    runnableExamples:
+        doAssert countries"Europe/Stockholm" == { SE }
+        doAssert countries"Asia/Bangkok" == {TH, KH, LA, VN}
+    let id = timezoneDatabase.idByName[tzname]
+    result = timezoneDatabase.timezones[id].ccs
+
+proc countries*(tz: Timezone): set[CountryCode] {.inline.} =
+    ## Shorthand for ``countries(tz.name)``
+    tz.name.countries
+
+proc tzNames*(country: CountryCode): seq[string] =
+    ## Get a list of timezone names known to be used by ``country``.
+    runnableExamples:
+        doAssert SE.tznames == @["Europe/Stockholm"]
+        doAssert VN.tznames == @["Asia/Bangkok", "Asia/Ho_Chi_Minh"]
+    let ids = timezoneDatabase.idsByCountry[country]
+    result = newSeq[string](ids.len)
+    for idx, id in ids:
+        result[idx] = timezoneDatabase.timezones[id].name
 
 template binarySeach(transitions: seq[Transition],
                      field: untyped, t: Time): int =
@@ -75,7 +113,7 @@ template binarySeach(transitions: seq[Transition],
             lower = mid
     lower
 
-proc initTimezone(tz: InternalTimezone): Timezone =
+proc initTimezone(name: string, tz: RuntimeTimezoneData): Timezone =
     # xxx it might be bad to keep the transitions in the closure,
     # since they're so many.
     # Probably better if the closure keeps a small reference to the index in the
@@ -119,7 +157,7 @@ proc initTimezone(tz: InternalTimezone): Timezone =
         result.utcOffset = -transition.utcOffset
         result.adjTime = time + initDuration(seconds = transition.utcOffset)
 
-    result.name = tz.name
+    result.name = name
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
@@ -144,8 +182,8 @@ proc tz*(name: string): Timezone {.inline.} =
         let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00+01:12"
-
-    result = initTimezone(timezoneDatabase.timezones[name])
+    let id = timezoneDatabase.idByName[name]
+    result = initTimezone(name, timezoneDatabase.timezones[id])
 
 proc tz*(name: static[string]): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
@@ -155,24 +193,24 @@ proc tz*(name: static[string]): Timezone {.inline.} =
         let sweden = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
         doAssert $dt == "1850-01-01T00:00:00+01:12"
-
     const resolved = name.resolveTimezone
     when not resolved.exists:
         {.fatal: "Timezone not found: '" & name &
             "'.\nDid you mean '" & resolved.candidate & "'?".}
-    
-    result = initTimezone(timezoneDatabase.timezones[name])
+
+    let id = timezoneDatabase.idByName[name]    
+    result = initTimezone(name, timezoneDatabase.timezones[id])
 
 proc initTimezone(name: string, offset: int): Timezone =
 
     proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
         result.isDst = false
-        result.utcOffset = -offset
+        result.utcOffset = offset
         result.adjTime = adjTime
 
     proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.}=
         result.isDst = false
-        result.utcOffset = -offset
+        result.utcOffset = offset
         result.adjTime = time - initDuration(seconds = offset)
 
     result.name = name

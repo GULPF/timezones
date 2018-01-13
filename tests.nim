@@ -3,6 +3,8 @@ import timezones
 import unittest
 
 let sweden = tz"Europe/Stockholm"
+
+
 const f = "yyyy-MM-dd HH:mm zzz"
 
 test "dst edge cases":
@@ -29,9 +31,16 @@ test "staticTz":
     check staticTz(hours = 2).name == "STATIC[-02:00:00]"
     check staticTz(hours = 2, minutes = 1).name == "STATIC[-02:01:00]"    
     check staticTz(hours = 2, minutes = 1, seconds = 13).name == "STATIC[-02:01:13]"
-    let tz = staticTz(seconds = 1)
-    let dt = initDateTime(1, mJan, 2000, 00, 00, 00, tz)
-    check dt.utcOffset == -1
+
+    block:
+        let tz = staticTz(seconds = 1)
+        let dt = initDateTime(1, mJan, 2000, 00, 00, 00, tz)
+        check dt.utcOffset == 1
+    
+    block:
+        let tz = staticTz(hours = -2, minutes = -30)
+        let dt = initDateTime(1, mJan, 2000, 12, 0, 0, tz)
+        doAssert $dt == "2000-01-01T12:00:00+02:30"
 
 test "large/small dates":
     let korea = tz"Asia/Seoul"

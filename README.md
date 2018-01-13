@@ -41,7 +41,7 @@ Fetch parameters:
     --out:<file>          # Write output to this file.
     --timezones:<zones>   # Only use these timezones.
     --regions:<regions>   # Only use these regions.
-    --json:<regions>      # Store transitions as JSON (required for JS support).
+    --json                # Store transitions as JSON (required for JS support).
 ```
 
 For example, `tzdb fetch 2017c --out:2017c.bin --startYear:1900 --endYear:2030` will create a tzdb file called `2017c.bin` containing

@@ -142,7 +142,7 @@ Fetch parameters:
     --out:<file>          # Write output to this file.
     --timezones:<zones>   # Only use these timezones.
     --regions:<regions>   # Only use these regions.
-    --json:<regions>      # Store transitions as JSON (required for JS support).
+    --json                # Store transitions as JSON (required for JS support).
 """
 
 type

@@ -8,6 +8,12 @@ when not defined(JS):
     import streams
 
 type
+    # Casting `string` to `Transition` isn't possible in JS,
+    # so for that backend we need to store the transitions as JSON.
+    FormatKind* = enum
+        fkJson = (0, "JSON"),
+        fkBinary = (1, "BINARY")
+
     Transition* = object {.packed.} # Packed so that it can be read/written directly.
         startUtc*: int64  ## Seconds since 1970-01-01 UTC when transition starts
         startAdj*: int64  ## Seconds since 1970-01-01, in the transitions timezone,
@@ -15,52 +21,64 @@ type
         isDst*: bool      ## If this transition is daylight savings time
         utcOffset*: int32 ## The active offset (west of UTC) for this transition
 
-    InternalTimezone* = object
+    Coordinates* = tuple[lat, lon: int32]
+
+    TimezoneData* = object
         transitions*: seq[Transition]
         name*: string
 
     OlsonVersion* = tuple[year: int32, release: char] # E.g 2014b
 
     OlsonDatabase* = object
-        timezones*: Table[string, InternalTimezone]
+        timezones*: Table[string, TimezoneData]
         locations*: Table[string, Location]
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
         fk*: FormatKind
 
-    Coordinate* = tuple
-        longitude: int32
-        latitude: int32
-
-    CountryCode* = distinct string # Two letter country code, e.g SE for Sweden
-
     Location* = object
         name*: string
-        cc*: seq[CountryCode]
-        position*: Coordinate
-
-    # Casting `string` to `Transition` isn't possible in JS,
-    # so for that backend we need to store the transitions as JSON.
-    FormatKind* = enum
-        fkJson = (0, "JSON"),
-        fkBinary = (1, "BINARY")
+        ccs*: seq[string]
+        position*: Coordinates
 
     # Properly parsing the bin format during compile time is to slow
     # due to lack of proper casting. Luckily we can do most of the parsing
     # and simply cast strings to `Transition` during runtime, since it has static size.
 
-    StaticInternalTimezone* = object
+    StaticTimezoneData* = object
         transitions: string
         name*: string
 
     StaticOlsonDataBase* = object
-        timezones*: seq[StaticInternalTimezone]
+        timezones*: seq[StaticTimezoneData]
         locations*: seq[Location]
         version*: OlsonVersion
         startYear*: int32
         endYear*: int32
         fk: FormatKind
+        # A collection of all country codes are placed in this
+        # field to make it easy to generate an enum.
+        ccs*: seq[string]
+
+    # These are the runtime versions of ``StaticTimezoneData`` and ``StaticOlsonDatabase``.
+    # `OlsonDatabase` could be reused for this, but
+    #   A) Compile time knowledge means that we can use an enum for CountryCode
+    #   B) ``OlsonDatabase`` is almost a direct representation of what is stored in the file.
+    #      This type on the other hand is optimized for how the data is actually used.
+
+    TimezoneId = int16
+
+    RuntimeTimezoneData*[ccEnum: enum] = object
+        transitions*: seq[Transition]
+        position*: Coordinates
+        ccs*: set[ccEnum]
+        name*: string
+
+    RuntimeOlsonDatabase*[ccEnum: enum] = object
+        timezones*: Table[TimezoneId, RuntimeTimezoneData[ccEnum]]
+        idsByCountry*: array[ccEnum, seq[TimezoneId]]
+        idByName*: Table[string, TimezoneId]
 
     # I'd prefer to use exceptions for this, but they are not available
     # at compile time.
@@ -95,20 +113,18 @@ proc parseOlsonVersion*(versionStr: string): OlsonVersion =
 proc `$`*(version: OlsonVersion): string =
     $version.year & version.release
 
-proc `$`*(cc: CountryCode): string {.borrow.}
-
-proc splitCountryCodes(str: string): seq[CountryCode] =
-    result = newSeq[CountryCode](str.len div 2)
+proc splitCountryCodes(str: string): seq[string] =
+    result = newSeq[string](str.len div 2)
     for i in countup(0, str.high, 2):
-        result[i div 2] = (str[i] & str[i + 1]).CountryCode
+        result[i div 2] = str[i] & str[i + 1]
 
-proc initLocation*(name: string, position: Coordinate, cc: seq[CountryCode]): Location =
+proc initLocation*(name: string, position: Coordinates, ccs: seq[string]): Location =
     result.name = name
     result.position = position
-    result.cc = cc
+    result.ccs = ccs
 
 proc initOlsonDatabase*(version: OlsonVersion, startYear, endYear: int32,
-                        zones: Table[string, InternalTimezone],
+                        zones: Table[string, TimezoneData],
                         locations: Table[string, Location]): OlsonDatabase =
     result.version = version
     result.startYear = startYear
@@ -135,10 +151,10 @@ proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     for name, location in db.locations:
         fs.write name.len.int32
         fs.write name
-        fs.write location.cc.len.int32 * 2 # Nbr of bytes, not nbr of cc
-        fs.write location.cc.join("")
-        fs.write location.position.latitude
-        fs.write location.position.longitude
+        fs.write location.ccs.len.int32 * 2 # Nbr of bytes, not nbr of ccs
+        fs.write location.ccs.join("")
+        fs.write location.position.lat
+        fs.write location.position.lon
 
     for name, zone in db.timezones:
         fs.write zone.name.len.int32
@@ -172,14 +188,14 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
     result.payload.endYear = fs.readInt32
     result.payload.fk = fs.readInt32().FormatKind
     discard fs.readStr HeaderPadding.len
-    result.payload.timezones = initTable[string, InternalTimezone]()
+    result.payload.timezones = initTable[string, TimezoneData]()
     result.payload.locations = initTable[string, Location]()
 
     for i in 0..<fs.readInt32:
         let name = fs.readStr
-        let cc = fs.readStr.splitCountryCodes
+        let ccs = fs.readStr.splitCountryCodes
         let pos = (fs.readInt32, fs.readInt32)
-        result.payload.locations[name] = initLocation(name, pos, cc)
+        result.payload.locations[name] = initLocation(name, pos, ccs)
 
     while not fs.atEnd:
         let name = fs.readStr
@@ -195,7 +211,7 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
         of fkJson:
             transitions = parseJson(fs.readStr(transitionsLen)).to(seq[Transition])
 
-        result.payload.timezones[name] = InternalTimezone(
+        result.payload.timezones[name] = TimezoneData(
             name: name,
             transitions: transitions
         )
@@ -251,6 +267,7 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     i.inc HeaderPadding.len
     result.payload.timezones = @[]
     result.payload.locations = @[]
+    result.payload.ccs = @[]
 
     if defined(JS) and result.payload.fk != fkJson:
         result.status = rsExpectedJsonFormat
@@ -258,14 +275,18 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
 
     for _ in 0..<content.eatI32(i):
         let name = content.eatStr(i)
-        let cc = content.eatStr(i).splitCountryCodes
+        let ccs = content.eatStr(i).splitCountryCodes
         let pos = (content.eatI32(i), content.eatI32(i))
-        result.payload.locations.add initLocation(name, pos, cc)
+        result.payload.locations.add initLocation(name, pos, ccs)
+        # O(bad)
+        for cc in ccs:
+            if cc notin result.payload.ccs:
+                result.payload.ccs.add cc
 
     while i < content.len:
         let name = content.eatStr(i)
         let transitions = content.eatStr(i)
-        result.payload.timezones.add StaticInternalTimezone(
+        result.payload.timezones.add StaticTimezoneData(
             name: name,
             transitions: transitions
         )
@@ -274,48 +295,55 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
 
 # This finishes the parsing during runtime.
 
-proc parseJsonTransitions(db: StaticOlsonDataBase,
-                          result: var OlsonDatabase) =
-    assert db.fk == fkJson
-    for zone in db.timezones:
-        result.timezones[zone.name] = InternalTimezone(
-            name: zone.name,
-            transitions: parseJson(zone.transitions).to(seq[Transition])
-        )
+proc parseTransitions(transitions: string,
+                      format: FormatKind): seq[Transition] =
+    when defined(JS):
+        parseJson(transitions).to(seq[Transition])
+    else:
+        case format
+        of fkJson:
+            result = parseJson(transitions).to(seq[Transition])
+        of fkBinary:
+            let stream = newStringStream(transitions)
+            defer: stream.close
+            let transitionsLen = transitions.len div sizeof(Transition)
+            result = newSeq[Transition](transitionsLen)
 
-proc parseBinaryTransitions(db: StaticOlsonDataBase,
-                            result: var OlsonDatabase) {.cproc.} =
-    assert db.fk == fkBinary
-    for zone in db.timezones:
-        let stream = newStringStream(zone.transitions)
-        defer: stream.close
-        let transitionsLen = zone.transitions.len div sizeof(Transition)
-        var transitions = newSeq[Transition](transitionsLen)
+            for i in 0..<transitionsLen:
+                var transition: Transition
+                discard stream.readData(cast[pointer](addr transition),
+                    sizeof(Transition))
+                result[i] = transition
 
-        for i in 0..<transitionsLen:
-            var transition: Transition
-            discard stream.readData(cast[pointer](addr transition), sizeof(Transition))
-            transitions[i] = transition
-
-        result.timezones[zone.name] = InternalTimezone(
-            name: zone.name,
-            transitions: transitions
-        )
-
-proc finalize*(db: StaticOlsonDataBase): OlsonDatabase =
-    result.version = db.version
-    result.timezones = initTable[string, InternalTimezone]()
-    result.locations = initTable[string, Location]()
-
-    for loc in db.locations:
-        result.locations[loc.name] = loc
-
+proc finalize*[ccEnum: enum](db: StaticOlsonDataBase): RuntimeOlsonDatabase[ccEnum] =
     when defined(JS):
         assert db.fk == fkJson
-        parseJsonTransitions(db, result)
-    else:
-        case db.fk
-        of fkBinary:
-            parseBinaryTransitions(db, result)
-        of fkJson:
-            parseJsonTransitions(db, result)
+    
+    result.timezones = initTable[TimezoneId, RuntimeTimezoneData[ccEnum]]()
+    result.idByName = initTable[string, TimezoneId]()
+    
+    var tzId: TimezoneId = 0
+
+    for tz in db.timezones:
+        result.timezones[tzId] = RuntimeTimezoneData[ccEnum](
+            transitions: parseTransitions(tz.transitions, db.fk),
+            name: tz.name
+        )
+        result.idByName[tz.name] = tzId
+
+        tzId.inc
+
+    for loc in db.locations:
+        let id = result.idByName[loc.name]
+        
+        for ccStr in loc.ccs:
+            let cc = parseEnum[ccEnum](ccStr)
+            if result.idsByCountry[cc].isNil:
+                result.idsByCountry[cc] = @[id]
+            else:
+                result.idsByCountry[cc].add id
+            result.timezones[id].ccs.incl cc
+        
+        result.timezones[id].position = loc.position
+
+proc foobar*[E: enum](db: StaticOlsonDataBase): RuntimeOlsonDatabase[E] = discard
