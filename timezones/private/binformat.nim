@@ -67,7 +67,7 @@ type
     #   B) ``OlsonDatabase`` is almost a direct representation of what is stored in the file.
     #      This type on the other hand is optimized for how the data is actually used.
 
-    TimezoneId = int16
+    TimezoneId* = int16
 
     RuntimeTimezoneData*[ccEnum: enum] = object
         transitions*: seq[Transition]
