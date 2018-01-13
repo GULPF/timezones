@@ -1,6 +1,6 @@
 import times
-import timezones
 import unittest
+import "../timezones/timezones.nim"
 
 let sweden = tz"Europe/Stockholm"
 

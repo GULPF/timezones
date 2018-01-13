@@ -3,7 +3,7 @@ import strutils
 import parseutils
 import tables
 import macros
-import timezones/private/binformat
+import private/binformat
 
 # Future improvements:
 #  - Put all transitions in an array[int, array[int, Transition]]

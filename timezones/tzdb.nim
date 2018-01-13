@@ -8,7 +8,7 @@ import times
 import options
 import parseopt2
 import tables
-import timezones/private/binformat
+import private/binformat
 
 type
     Command = enum
@@ -41,9 +41,9 @@ proc zic(regions: Option[seq[string]]) =
     discard execProcess fmt"zic -d {ZicDir} {files}"
 
 proc processZdumpZone(tzname, content: string,
-                      appendTo: var Table[string, InternalTimezone]) =
+                      appendTo: var Table[string, TimezoneData]) =
     var lineIndex = -1
-    var timezone = InternalTimezone(name: tzname, transitions: @[])
+    var timezone = TimezoneData(name: tzname, transitions: @[])
 
     for line in content.splitLines:
         if line.len == 0: continue
@@ -67,8 +67,8 @@ proc processZdumpZone(tzname, content: string,
     appendTo[tzname] = timezone
 
 proc zdump(startYear, endYear: int32,
-           tznames: Option[seq[string]]): Table[string, InternalTimezone] =
-    result = initTable[string, InternalTimezone]()
+           tznames: Option[seq[string]]): Table[string, TimezoneData] =
+    result = initTable[string, TimezoneData]()
 
     for tzfile in walkDirRec(ZicDir, {pcFile}):
         let content = execProcess fmt"zdump -v -c {startYear},{endYear} {tzfile}"
@@ -87,7 +87,7 @@ proc zdump(startYear, endYear: int32,
 
         processZdumpZone(tzname, content, appendTo = result)
 
-proc parseCoordinate(str: string): Coordinate =
+proc parseCoordinate(str: string): Coordinates =
     var lat = $str[0]
     var lon = ""
     var i = 1
@@ -99,7 +99,7 @@ proc parseCoordinate(str: string): Coordinate =
 
     result = (lat.parseInt.int32, lon.parseInt.int32)
 
-proc zone1970(zones: Table[string, InternalTimezone]): Table[string, Location] =
+proc zone1970(zones: Table[string, TimezoneData]): Table[string, Location] =
     ## Parsed the ``zone1970.tab`` file and returns the locations.
     ## Only returns the locations referenced by ``zones``.
     result = initTable[string, Location]()
@@ -111,9 +111,8 @@ proc zone1970(zones: Table[string, InternalTimezone]): Table[string, Location] =
         if tzname notin zones: continue
 
         let position = parseCoordinate(coordStr)
-        let cc = ccStr.split(',').mapIt(it.CountryCode)
-
-        result[tzname] = initLocation(tzname, position, cc)
+        let ccs = ccStr.split(',')
+        result[tzname] = initLocation(tzname, position, ccs)
 
 proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
                             startYear, endYear: int32,
