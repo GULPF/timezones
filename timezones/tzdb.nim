@@ -88,16 +88,19 @@ proc zdump(startYear, endYear: int32,
         processZdumpZone(tzname, content, appendTo = result)
 
 proc parseCoordinate(str: string): Coordinates =
-    var lat = $str[0]
-    var lon = ""
-    var i = 1
-    
-    while str[i] in Digits:
-        lat.add str[i]
-        i.inc
-    lon = str[i..^1]
+    template parse(s: string): int16 = s.parseInt.int16
 
-    result = (lat.parseInt.int32, lon.parseInt.int32)
+    case str.len
+    of "+DDMM+DDDMM".len:
+        let lat = (str[0..2].parse, str[3..4].parse,  0'i16)
+        let lon = (str[5..8].parse, str[9..10].parse, 0'i16)
+        result = (lat, lon)
+    of "+DDMMSS+DDDMMSS".len:
+        let lat = (str[0..2].parse,  str[3..4].parse,   str[5..6].parse)
+        let lon = (str[7..10].parse, str[11..12].parse, str[13..14].parse)
+        result = (lat, lon)
+    else:
+        doAssert false
 
 proc zone1970(zones: Table[string, TimezoneData]): Table[string, Location] =
     ## Parsed the ``zone1970.tab`` file and returns the locations.

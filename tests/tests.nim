@@ -1,5 +1,6 @@
 import times
 import unittest
+import options
 import "../timezones/timezones.nim"
 
 let sweden = tz"Europe/Stockholm"
@@ -48,3 +49,19 @@ test "large/small dates":
     check small.utcOffset == -30472
     let large = initDateTIme(1, mJan, 2100, 00, 00, 00, korea)
     check large.utcOffset == -32400
+
+test "validation":
+    # Name must be placed in a variable so that 
+    # static validation isn't triggered.
+    let tzname = "Not a timezone"
+    expect ValueError, (discard tz(tzname))
+    expect ValueError, (discard location(tzname))
+    expect ValueError, (discard countries(tzname))
+
+    check(not compiles(tz"Not a timezone"))
+    check(not compiles(location"Not a timezone"))
+    check(not compiles(countries"Not a timezone"))
+
+test "location":
+    check (location"Europe/Stockholm").get ==
+        ((59'i16, 20'i16, 0'i16), (18'i16, 3'i16, 0'i16))

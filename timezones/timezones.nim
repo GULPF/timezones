@@ -5,6 +5,8 @@ import macros
 import options
 import private/binformat
 
+export binformat.Coordinates
+
 # Future improvements:
 #  - Put all transitions in an array[int, array[int, Transition]]
 #  - Put names in a HashTable[string, int]
@@ -139,15 +141,16 @@ proc tzNames*(country: CountryCode): seq[string] =
     for idx, id in ids:
         result[idx] = timezoneDatabase.timezones[id].name
 
-proc locationImpl(id: TimezoneId): Option[tuple[lat, lon: int]] =
+proc locationImpl(id: TimezoneId): Option[Coordinates] =
     let tz = timezoneDatabase.timezones[id]
     # `RuntimeTimezoneData` should probably store `position` as
     # an `Option`, but (0, 0) is in the middle of the ocean so it doesn't
     # really matter.
-    if tz.position != (0'i32, 0'i32):
-        result = some((tz.position.lat.int, tz.position.lon.int))
+    var default: Coordinates
+    if tz.position != default:
+        result = some(tz.position)
 
-proc location*(tzname: string): Option[tuple[lat, lon: int]] =
+proc location*(tzname: string): Option[Coordinates] =
     ## Get the coordinates of a timezone. This is generally the position
     ## of the city in the timezone name.
     ## E.g ``location"Europe/Stockholm"`` will give the the coordinates
@@ -160,7 +163,7 @@ proc location*(tzname: string): Option[tuple[lat, lon: int]] =
     let id = getId(tzname)
     locationImpl(id)
 
-proc location*(tzname: static[string]): Option[tuple[lat, lon: int]] =
+proc location*(tzname: static[string]): Option[Coordinates] =
     let id = getIdStatic()
     locationImpl(id)
 

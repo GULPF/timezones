@@ -21,7 +21,8 @@ type
         isDst*: bool      ## If this transition is daylight savings time
         utcOffset*: int32 ## The active offset (west of UTC) for this transition
 
-    Coordinates* = tuple[lat, lon: int32]
+    Dms* = tuple[deg, min, sec: int16]
+    Coordinates* = tuple[lat, lon: Dms]
 
     TimezoneData* = object
         transitions*: seq[Transition]
@@ -136,6 +137,14 @@ proc readStr(s: Stream): string {.cproc.} =
     let len = s.readInt32
     result = s.readStr(len)
 
+proc readPosition(s: Stream): Coordinates {.cproc.} =
+    result.lat.deg = s.readInt16
+    result.lat.min = s.readInt16
+    result.lat.sec = s.readInt16
+    result.lon.deg = s.readInt16
+    result.lon.min = s.readInt16
+    result.lon.sec = s.readInt16
+
 proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
     let fs = newFileStream(path, fmWrite)
     defer: fs.close
@@ -153,8 +162,7 @@ proc saveToFile*(db: OlsonDatabase, path: string, fk: FormatKind) {.cproc.} =
         fs.write name
         fs.write location.ccs.len.int32 * 2 # Nbr of bytes, not nbr of ccs
         fs.write location.ccs.join("")
-        fs.write location.position.lat
-        fs.write location.position.lon
+        fs.write location.position
 
     for name, zone in db.timezones:
         fs.write zone.name.len.int32
@@ -194,7 +202,7 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
     for i in 0..<fs.readInt32:
         let name = fs.readStr
         let ccs = fs.readStr.splitCountryCodes
-        let pos = (fs.readInt32, fs.readInt32)
+        let pos = fs.readPosition
         result.payload.locations[name] = initLocation(name, pos, ccs)
 
     while not fs.atEnd:
@@ -219,8 +227,9 @@ proc readFromFile*(path: string): ReadResult[OlsonDatabase] {.cproc.} =
 # This is a small VM friendly binary parser, probably slow as hell.
 
 {.push compileTime.}
+{.push inline.}
 
-proc castToInt32(str: string): int32 =
+proc toI32(str: string): int32 =
     ## xxx this is terrible, it will break when using JS with a file in bigEndian
     when cpuEndian == littleEndian or defined(JS):
         result = (str[3].int32 shl 24) or
@@ -229,9 +238,20 @@ proc castToInt32(str: string): int32 =
         result = (str[0].int32 shl 24) or
             (str[1].int32 shl 16) or (str[2].int32 shl 8) or str[3].int32
 
+proc toI16(str: string): int16 =
+    ## xxx this is terrible, it will break when using JS with a file in bigEndian
+    when cpuEndian == littleEndian or defined(JS):
+        result = (str[1].int16 shl 8) or str[0].int16
+    else:
+        result = (str[0].int16 shl 8) or str[1].int16
+
 proc eatI32(str: string, index: var int): int32 =
-    result = str[index..(index + 3)].castToInt32
+    result = str[index..(index + 3)].toI32
     index.inc 4
+
+proc eatI16(str: string, index: var int): int16 =
+    result = str[index..(index + 1)].toI16
+    index.inc 2
 
 proc eatChar(str: string, index: var int): char =
     result = str[index]
@@ -246,6 +266,16 @@ proc eatStr(str: string, index: var int): string =
     ## Assumes that the string field is prepended by a len field.
     let len = str.eatI32(index)
     result = str.eatStr(len, index)
+
+proc eatPosition(str: string, index: var int): Coordinates =
+    result.lat.deg = str.eatI16(index)
+    result.lat.min = str.eatI16(index)
+    result.lat.sec = str.eatI16(index)
+    result.lon.deg = str.eatI16(index)
+    result.lon.min = str.eatI16(index)
+    result.lon.sec = str.eatI16(index)
+
+{.pop.} # inline
 
 proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     # if not path.fileExists:
@@ -276,7 +306,7 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
     for _ in 0..<content.eatI32(i):
         let name = content.eatStr(i)
         let ccs = content.eatStr(i).splitCountryCodes
-        let pos = (content.eatI32(i), content.eatI32(i))
+        let pos = content.eatPosition(i)
         result.payload.locations.add initLocation(name, pos, ccs)
         # O(bad)
         for cc in ccs:
@@ -291,7 +321,7 @@ proc staticReadFromFile*(path: string): ReadResult[StaticOlsonDatabase] =
             transitions: transitions
         )
 
-{.pop.}
+{.pop.} # compileTime
 
 # This finishes the parsing during runtime.
 
