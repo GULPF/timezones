@@ -64,7 +64,8 @@ macro createCountryCodeEnum(countryCodes: static[seq[string]]): untyped =
     )
 
 createCountryCodeEnum(staticDatabase.ccs)
-let timezoneDatabase = finalize[CountryCode](staticDatabase)
+const nTimezones = staticDatabase.timezones.len
+let timezoneDatabase = finalize[CountryCode, nTimezones](staticDatabase)
 
 const v = $staticDatabase.version
 const TzdbMetadata* = (

@@ -75,8 +75,8 @@ type
         ccs*: set[ccEnum]
         name*: string
 
-    RuntimeOlsonDatabase*[ccEnum: enum] = object
-        timezones*: Table[TimezoneId, RuntimeTimezoneData[ccEnum]]
+    RuntimeOlsonDatabase*[ccEnum: enum, N: static[int]] = object
+        timezones*: array[N, RuntimeTimezoneData[ccEnum]]
         idsByCountry*: array[ccEnum, seq[TimezoneId]]
         idByName*: Table[string, TimezoneId]
 
@@ -315,13 +315,12 @@ proc parseTransitions(transitions: string,
                     sizeof(Transition))
                 result[i] = transition
 
-proc finalize*[ccEnum: enum](db: StaticOlsonDataBase): RuntimeOlsonDatabase[ccEnum] =
+proc finalize*[ccEnum: enum; N: static[int]](db: StaticOlsonDataBase): RuntimeOlsonDatabase[ccEnum, N] =
     when defined(JS):
         assert db.fk == fkJson
-    
-    result.timezones = initTable[TimezoneId, RuntimeTimezoneData[ccEnum]]()
+
     result.idByName = initTable[string, TimezoneId]()
-    
+
     var tzId: TimezoneId = 0
 
     for tz in db.timezones:
@@ -345,5 +344,3 @@ proc finalize*[ccEnum: enum](db: StaticOlsonDataBase): RuntimeOlsonDatabase[ccEn
             result.timezones[id].ccs.incl cc
         
         result.timezones[id].position = loc.position
-
-proc foobar*[E: enum](db: StaticOlsonDataBase): RuntimeOlsonDatabase[E] = discard
