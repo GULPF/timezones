@@ -7,6 +7,10 @@ import private/binformat
 
 export binformat.Coordinates
 
+template nodoc(fun: untyped): untyped =
+    when not defined(nimsuggest) and not defined(nimdoc):
+        fun
+
 # Future improvements:
 #  - Put all transitions in an array[int, array[int, Transition]]
 #  - Put names in a HashTable[string, int]
@@ -122,7 +126,7 @@ proc countries*(tzname: string): set[CountryCode] =
     let id = getId(tzname)
     result = timezoneDatabase.timezones[id].ccs
 
-proc countries*(tzname: static[string]): set[CountryCode] =
+proc countries*(tzname: static[string]): set[CountryCode] {.nodoc.} =
     let id = getIdStatic()
     result = timezoneDatabase.timezones[id].ccs
 
@@ -163,7 +167,7 @@ proc location*(tzname: string): Option[Coordinates] =
     let id = getId(tzname)
     locationImpl(id)
 
-proc location*(tzname: static[string]): Option[Coordinates] =
+proc location*(tzname: static[string]): Option[Coordinates] {.nodoc.} =
     let id = getIdStatic()
     locationImpl(id)
 
@@ -241,15 +245,7 @@ proc tz*(tzname: string): Timezone {.inline.} =
     let id = getId(tzname)
     result = initTimezone(tzname, timezoneDatabase.timezones[id])
 
-proc tz*(tzname: static[string]): Timezone {.inline.} =
-    ## Create a timezone using a name from the IANA timezone database.
-    ## Validates the timezone name during compile time.
-    runnableExamples:
-        import times
-        let sweden = tz"Europe/Stockholm"
-        let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
-        doAssert $dt == "1850-01-01T00:00:00+01:12"
-
+proc tz*(tzname: static[string]): Timezone {.inline, nodoc.} =
     let id = getIdStatic()
     result = initTimezone(tzname, timezoneDatabase.timezones[id])
 
