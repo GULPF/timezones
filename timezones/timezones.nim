@@ -7,15 +7,19 @@ import private/binformat
 
 export binformat.Coordinates
 
+# TODO: Add Etc/UTC to element 0 in timezone db
+
+proc `$`*(coords: Coordinates): string =
+    let latD = if coords.lat.deg < 0: 'S' else: 'N'
+    let lonD = if coords.lon.deg < 0: 'W' else: 'E'
+    "$1° $2′ $3″ $4 $5° $6′ $7″ $8".format(
+        coords.lat.deg, coords.lat.min, coords.lat.sec, latD,
+        coords.lon.deg, coords.lon.min, coords.lon.sec, lonD
+    )
+
 template nodoc(fun: untyped): untyped =
     when not defined(nimsuggest) and not defined(nimdoc):
         fun
-
-# Future improvements:
-#  - Put all transitions in an array[int, array[int, Transition]]
-#  - Put names in a HashTable[string, int]
-#  - In the timezone closure, only keep the tz index around.
-#    Note that reading the transitions is gcsafe.
 
 # type
 #     DateTimeClass = enum
@@ -164,6 +168,10 @@ proc location*(tzname: string): Option[Coordinates] =
     ## so this proc returns an ``Option`` when there is no position available.
     ## However, if the timezone name is not found, then a ``ValueError`` will
     ## be raised.
+    runnableExamples:
+        import options
+        doAssert $(location"Europe/Stockholm") == r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
+        # doAssert $(location"Etc/UTC") == "None"
     let id = getId(tzname)
     locationImpl(id)
 

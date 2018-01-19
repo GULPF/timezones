@@ -63,5 +63,4 @@ test "validation":
     check(not compiles(countries"Not a timezone"))
 
 test "location":
-    check (location"Europe/Stockholm").get ==
-        ((59'i16, 20'i16, 0'i16), (18'i16, 3'i16, 0'i16))
+    check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"
