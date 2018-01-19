@@ -64,3 +64,10 @@ test "validation":
 
 test "location":
     check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"
+
+test "Etc/UTC":
+    check (location"Etc/UTC").isNone
+    check tz"Etc/UTC" == utc()
+    let dt = initDateTime(1, mJan, 1970, 00, 00, 00, utc())
+    check $dt == $(dt.inZone(tz"Etc/UTC"))
+    check countries"Etc/UTC" == {}

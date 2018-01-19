@@ -345,13 +345,26 @@ proc parseTransitions(transitions: string,
                     sizeof(Transition))
                 result[i] = transition
 
-proc finalize*[ccEnum: enum; N: static[int]](db: StaticOlsonDataBase): RuntimeOlsonDatabase[ccEnum, N] =
+proc finalize*[ccEnum: enum; N: static[int]](db: StaticOlsonDataBase):
+        RuntimeOlsonDatabase[ccEnum, N + 1] =
+
     when defined(JS):
         assert db.fk == fkJson
 
     result.idByName = initTable[string, TimezoneId]()
 
-    var tzId: TimezoneId = 0
+    result.idByName["Etc/UTC"] = 0
+    result.timezones[0] = RuntimeTimezoneData[ccEnum](
+        name: "Etc/UTC",
+        transitions: @[Transition(
+            startUtc: 0,
+            startAdj: 0,
+            isDst: false,
+            utcOffset: 0
+        )]
+    )
+
+    var tzId: TimezoneId = 1
 
     for tz in db.timezones:
         result.timezones[tzId] = RuntimeTimezoneData[ccEnum](

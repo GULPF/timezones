@@ -87,7 +87,10 @@ const TzdbMetadata* = (
   ## These values will depend on what parameters was used when creating the tzdb file.
 
 proc resolveTimezone(name: string): tuple[candidate: string,
-                                          candidateDistance: int] =
+                                          candidateDistance: int]
+                                    {.compileTime.} =
+    if name == "Etc/UTC":
+        return (name, 0)
     var bestCandidate: string
     var bestDistance = high(int)
     for tz in staticDatabase.timezones:
