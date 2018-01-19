@@ -95,7 +95,7 @@ type
         payload: T
 
 # The current version of the binary format
-const Version = 4'i32
+const Version = 5'i32
 # Header uses 32 bytes.
 const HeaderSize = 32'i32
 # The header size used by this version.
