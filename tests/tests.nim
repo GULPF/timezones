@@ -24,9 +24,9 @@ test "dst edge cases":
 test "from utc":
     var local = fromUnix(1469275200).inZone(sweden)
     var utc = fromUnix(1469275200).utc
-    let claimedOffset = initDuration(seconds = local.utcOffset)
+    let claimedOffset = local.utcOffset
     local.utcOffset = 0
-    check claimedOffset == utc.toTime - local.toTime
+    check claimedOffset == utc.toTime.toUnix - local.toTime.toUnix
 
 test "staticTz":
     check staticTz(hours = 2).name == "STATIC[-02:00:00]"

@@ -214,8 +214,7 @@ proc initTimezone(tzname: string, tz: RuntimeTimezoneData): Timezone =
             if adjTime.toUnix > next.startAdj - offsetDiff:
                 result.isDst = next.isDst
                 result.utcOffset = -next.utcOffset
-                result.adjTime = adjTime +
-                    initDuration(seconds = offsetDiff)
+                result.adjTime = fromUnix(adjTime.toUnix + offsetDiff)
                 return
 
         result.isDst = transition.isDst
@@ -239,7 +238,7 @@ proc initTimezone(tzname: string, tz: RuntimeTimezoneData): Timezone =
         let transition = tz.transitions[tz.transitions.binarySeach(startUtc, time)]
         result.isDst = transition.isDst
         result.utcOffset = -transition.utcOffset
-        result.adjTime = time + initDuration(seconds = transition.utcOffset)
+        result.adjTime = fromUnix(time.toUnix + transition.utcOffset)
 
     result.name = tzname
     result.zoneInfoFromTz = zoneInfoFromTz
@@ -270,7 +269,7 @@ proc initTimezone(tzname: string, offset: int): Timezone =
     proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.}=
         result.isDst = false
         result.utcOffset = offset
-        result.adjTime = time - initDuration(seconds = offset)
+        result.adjTime = fromUnix(time.toUnix - offset)
 
     result.name = tzname
     result.zoneInfoFromTz = zoneInfoFromTz
