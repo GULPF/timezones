@@ -5,8 +5,7 @@ author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
-skipFiles = @["timezones/tzdb.nim", "timezones/tzdb.nim.cfg"]
-skipDirs = @["tests"]
+srcDir = "src"
 bin = @["timezones/tzdb"]
 
 requires "nim >= 0.17.3"
