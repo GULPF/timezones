@@ -8,11 +8,7 @@ import times
 import options
 import parseopt2
 import tables
-import private/binformat
-
-type
-    Command = enum
-        cFetch = "fetch", cDump = "dump", cDiff = "diff"
+import private/timezonefile
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
@@ -143,7 +139,6 @@ Fetch parameters:
 
 type
     CliOptions = object
-        command: Command
         arguments: seq[string]
         startYear: int32
         endYear: int32
@@ -165,11 +160,7 @@ proc getCliOptions(): CliOptions =
         try:
             case kind
             of cmdArgument:
-                if not hasCommand:
-                    result.command = parseEnum[Command](key)
-                    hasCommand = true
-                else:
-                    result.arguments.add key
+                result.arguments.add key
             of cmdLongOption, cmdShortOption:
                 case key
                 of "help", "h":
@@ -177,16 +168,13 @@ proc getCliOptions(): CliOptions =
                     quit()
                 of "startYear": result.startYear = val.parseInt.int32
                 of "endYear": result.endYear = val.parseInt.int32
-                of "out": result.outfile = some(val)
+                of "out", "o": result.outfile = some(val)
                 of "timezones": result.tznames = some(val.splitWhitespace)
                 of "regions": result.regions = some(val.splitWhitespace)
                 else: raise newException(ValueError, "Bad input")
             of cmdEnd: assert(false) # cannot happen
         except:
             case kind
-            of cmdArgument:
-                echo fmt"Invalid command: {key}"
-                quit(QuitFailure)
             of cmdLongOption, cmdShortOption:
                 let flag =
                     if kind == cmdLongOption:
@@ -206,7 +194,7 @@ proc getCliOptions(): CliOptions =
                 echo helpMsg
                 echo ""
                 quit(QuitFailure)
-            of cmdEnd: assert(false) # cannot happen            
+            else: assert(false) # cannot happen            
 
     if not hasCommand:
         echo "Wrong usage."
@@ -217,29 +205,10 @@ when isMainModule:
 
     var opts = getCliOptions()
 
-    case opts.command
-    of cDump:
-        doAssert opts.arguments.len == 1
-        let db = loadOlsonDatabase(opts.arguments[0])
-        let path = opts.arguments[0]
-        echo ""
-        echo fmt"Meta data for file '{path}'"
-        echo ""
-        echo fmt"Version:             {$db.version:>8}"
-        # echo fmt"Start year:          {db.startYear:>8}"
-        # echo fmt"End year:            {db.endYear:>8}"
-        echo fmt"Size:                {path.getFileSize div 1000:>6}kB"
-        echo fmt"Number of timezones: {db.timezones.len:>8}"
-        echo ""
-    of cFetch:
-        doAssert opts.arguments.len == 1
-        echo "Fetching and processing timezone data. This might take a while..."
-        let version = parseOlsonVersion(opts.arguments[0])
-        let defaultFilePath = getCurrentDir() / ($version & ".json")
-        let filePath = opts.outfile.get(defaultFilePath)
-        fetchTimezoneDatabase(version, filePath, opts.startYear,
-            opts.endYear, opts.tznames, opts.regions)
-    of cDiff:
-        doAssert opts.arguments.len == 2
-        echo "Not implemented"
-        quit(QuitFailure)
+    doAssert opts.arguments.len == 1
+    echo "Fetching and processing timezone data. This might take a while..."
+    let version = parseOlsonVersion(opts.arguments[0])
+    let defaultFilePath = getCurrentDir() / ($version & ".json")
+    let filePath = opts.outfile.get(defaultFilePath)
+    fetchTimezoneDatabase(version, filePath, opts.startYear,
+        opts.endYear, opts.tznames, opts.regions)

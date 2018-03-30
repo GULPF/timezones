@@ -5,16 +5,14 @@ author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
-srcDir = "src"
-bin = @["timezones/tzdb"]
-
+bin = @["timezones/fetch-json-timezones"]
+skipDirs = @["tests"]
 requires "nim >= 0.17.3"
 
 # Tasks
 
-task tzdb, "Fetch the timezone database":
-    exec "tzdb fetch " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".bin"
-    exec "tzdb fetch " & paramStr(2) & " --json --out:./bundled_tzdb_files/" & paramStr(2) & ".json.bin"
+task fetch, "Fetch the timezone database":
+    exec "fetch-json-timezones " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".json"
 
 task test, "Run the tests":
     echo "\nRunning C tests"
