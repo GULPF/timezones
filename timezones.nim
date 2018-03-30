@@ -151,9 +151,10 @@ proc parseJsonTimezones*(content: string): OlsonDatabase =
     ## Parse a timezone database from its JSON representation.
     timezonefile.parseOlsonDatabase(content)
 
-proc loadJsonTimezones*(path: string): OlsonDatabase =
-    ## Load a timezone database from a JSON file.
-    timezonefile.loadOlsonDatabase(path)
+when not defined(js):
+    proc loadJsonTimezones*(path: string): OlsonDatabase =
+        ## Load a timezone database from a JSON file.
+        timezonefile.loadOlsonDatabase(path)
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):

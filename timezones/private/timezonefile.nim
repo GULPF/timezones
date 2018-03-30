@@ -1,6 +1,6 @@
 import times
 import strutils, sequtils
-import json, jsontypes
+import json
 import tables
 
 when not defined(JS):
@@ -45,6 +45,18 @@ type
 template cproc(def: untyped) =
     when not defined(JS):
         def
+
+proc `%`*[T](table: Table[string, T]|OrderedTable[string, T]): JsonNode =
+  ## Generic constructor for JSON data. Creates a new ``JObject JsonNode``.
+  result = newJObject()
+  for k, v in table:
+    result[k] = v
+
+proc `%`*(c: char): JsonNode =
+  ## Generic constructor for JSON data. Creates a new `JString JsonNode`.
+  new(result)
+  result.kind = JString
+  result.str = $c
 
 proc `%`(coords: Coordinates): JsonNode = %[
     coords.lat.deg, coords.lat.min, coords.lat.sec,
@@ -97,6 +109,17 @@ proc deserializeOlsonDatabase(jnode: JsonNode): OlsonDatabase =
         jnode["version"]["release"].getStr)
 
     var zones = newSeq[TimezoneData]()
+
+    zones.add TimezoneData(
+        name: "Etc/UTC",
+        transitions: @[Transition(
+            startUtc: 0,
+            startAdj: 0,
+            isDst: false,
+            utcOffset: 0
+        )]
+    )
+
     for tz in jnode["timezones"]:
 
         var countries = newSeq[string]()
@@ -124,47 +147,3 @@ proc loadOlsonDatabase*(path: string): OlsonDatabase {.cproc.} =
 
 proc parseOlsonDatabase*(content: string): OlsonDatabase =
     parseJson(content).deserializeOlsonDatabase
-
-# proc finalize*[ccEnum: enum; N: static[int]](db: StaticOlsonDataBase):
-#         RuntimeOlsonDatabase[ccEnum, N + 1] =
-
-#     when defined(JS):
-#         assert db.fk == fkJson
-
-#     result.idByName = initTable[string, TimezoneId]()
-    
-#     ## TODO: This needs to be included in the new design!
-#     result.idByName["Etc/UTC"] = 0
-#     result.timezones[0] = RuntimeTimezoneData[ccEnum](
-#         name: "Etc/UTC",
-#         transitions: @[Transition(
-#             startUtc: 0,
-#             startAdj: 0,
-#             isDst: false,
-#             utcOffset: 0
-#         )]
-#     )
-
-#     var tzId: TimezoneId = 1
-
-#     for tz in db.timezones:
-#         result.timezones[tzId] = RuntimeTimezoneData[ccEnum](
-#             transitions: parseTransitions(tz.transitions, db.fk),
-#             name: tz.name
-#         )
-#         result.idByName[tz.name] = tzId
-
-#         tzId.inc
-
-#     for loc in db.locations:
-#         let id = result.idByName[loc.name]
-        
-#         for ccStr in loc.ccs:
-#             let cc = parseEnum[ccEnum](ccStr)
-#             if result.idsByCountry[cc].isNil:
-#                 result.idsByCountry[cc] = @[id]
-#             else:
-#                 result.idsByCountry[cc].add id
-#             result.timezones[id].ccs.incl cc
-        
-#         result.timezones[id].coordinates = loc.coordinates

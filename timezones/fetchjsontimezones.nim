@@ -196,15 +196,8 @@ proc getCliOptions(): CliOptions =
                 quit(QuitFailure)
             else: assert(false) # cannot happen            
 
-    if not hasCommand:
-        echo "Wrong usage."
-        echo helpMsg
-        quit()
-
 when isMainModule:
-
     var opts = getCliOptions()
-
     doAssert opts.arguments.len == 1
     echo "Fetching and processing timezone data. This might take a while..."
     let version = parseOlsonVersion(opts.arguments[0])

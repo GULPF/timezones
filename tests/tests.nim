@@ -1,10 +1,9 @@
 import times
 import unittest
 import options
-import "../timezones/timezones.nim"
+import "../timezones.nim"
 
 let sweden = tz"Europe/Stockholm"
-
 
 const f = "yyyy-MM-dd HH:mm zzz"
 
@@ -43,12 +42,15 @@ test "staticTz":
         let dt = initDateTime(1, mJan, 2000, 12, 0, 0, tz)
         doAssert $dt == "2000-01-01T12:00:00+02:30"
 
-test "large/small dates":
-    let korea = tz"Asia/Seoul"
-    let small = initDateTime(1, mJan, 0001, 00, 00, 00, korea)
-    check small.utcOffset == -30472
-    let large = initDateTIme(1, mJan, 2100, 00, 00, 00, korea)
-    check large.utcOffset == -32400
+# Does not yet work due to overflow/underflows bugs in the JS backend
+# for int64. See #6752.
+when not defined(js):
+    test "large/small dates":
+        let korea = tz"Asia/Seoul"
+        let small = initDateTime(1, mJan, 0001, 00, 00, 00, korea)
+        check small.utcOffset == -30472
+        let large = initDateTIme(1, mJan, 2100, 00, 00, 00, korea)
+        check large.utcOffset == -32400
 
 test "validation":
     # Name must be placed in a variable so that 
@@ -57,11 +59,6 @@ test "validation":
     expect ValueError, (discard tz(tzname))
     expect ValueError, (discard location(tzname))
     expect ValueError, (discard countries(tzname))
-
-    check(not compiles(tz"Not a timezone"))
-    check(not compiles(location"Not a timezone"))
-    check(not compiles(countries"Not a timezone"))
-
 test "location":
     check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"
 
@@ -70,4 +67,4 @@ test "Etc/UTC":
     check tz"Etc/UTC" == utc()
     let dt = initDateTime(1, mJan, 1970, 00, 00, 00, utc())
     check $dt == $(dt.inZone(tz"Etc/UTC"))
-    check countries"Etc/UTC" == {}
+    check (countries"Etc/UTC").len == 0
