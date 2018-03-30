@@ -55,10 +55,12 @@ when not defined(js):
 test "validation":
     # Name must be placed in a variable so that 
     # static validation isn't triggered.
-    let tzname = "Not a timezone"
-    expect ValueError, (discard tz(tzname))
-    expect ValueError, (discard location(tzname))
-    expect ValueError, (discard countries(tzname))
+    let str = "Invalid string"
+    expect ValueError, (discard tz(str))
+    expect ValueError, (discard location(str))
+    expect ValueError, (discard countries(str))
+    expect ValueError, (discard tzNames(str))
+
 test "location":
     check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"
 

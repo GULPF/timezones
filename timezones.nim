@@ -7,7 +7,17 @@ import timezones/private/timezonefile
 
 export timezonefile.Coordinates
 
+# This is a bit ugly, but they need to be documented...
+when defined(nimdoc):
+    type
+        Dms* = tuple[deg, min, sec: int16] ## A coordinate specified
+            ## in degrees (deg), minutes (min) and seconds (sec).
+        Coordinates* = tuple[lat, lon: Dms] ## Globe coordinates.
+
 proc `$`*(coords: Coordinates): string =
+    runnableExamples:
+        let loc = ((1'i16, 2'i16, 3'i16), (4'i16, 5'i16, 6'i16))
+        doAssert $loc == r"1° 2′ 3″ N 4° 5′ 6″ E"
     let latD = if coords.lat.deg < 0: 'S' else: 'N'
     let lonD = if coords.lon.deg < 0: 'W' else: 'E'
     "$1° $2′ $3″ $4 $5° $6′ $7″ $8".format(
@@ -165,17 +175,18 @@ when defined(timezonesPath) and defined(timezonesNoEmbeed):
 
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
-    let EmbeededTzdb* =
-        parseOlsonDatabase(content) ## The embeeded tzdata.
-                                    ## Not available if -d:timezonesNoEmbeed is used.
+
+    let embeededTzdbImpl = parseOlsonDatabase(content)
+    let EmbeededTzdb* = embeededTzdbImpl ## The embeeded tzdata.
+        ## Not available if ``-d:timezonesNoEmbeed`` is used.
 
     {.push inline.}
 
     proc countries*(tzname: string): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert countries"Europe/Stockholm" == [ "SE" ]
-            doAssert countries"Asia/Bangkok" == [ "TH", "KH", "LA", "VN" ]
+            doAssert countries"Europe/Stockholm" == @[ "SE" ]
+            doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
         EmbeededTzdb.countries(tzname)
 
     proc countries*(tz: Timezone): seq[string] =
@@ -185,8 +196,8 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
     proc tzNames*(country: string): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert cc"SE".tznames == @["Europe/Stockholm"]
-            doAssert cc"VN".tznames == @["Asia/Bangkok", "Asia/Ho_Chi_Minh"]
+            doAssert "SE".tznames == @["Europe/Stockholm"]
+            doAssert "VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
         EmbeededTzdb.tzNames(country)
 
     proc location*(tzname: string): Option[Coordinates] =
@@ -198,6 +209,10 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
         EmbeededTzdb.location(tzname)
 
     proc location*(tz: Timezone): Option[Coordinates] {.inline.} =
+        ## Convenience proc using the embeeded timezone database
+        runnableExamples:
+            import times
+            doAssert utc().location.isNone
         EmbeededTzdb.location(tz)
 
     proc tz*(tzname: string): Timezone =
