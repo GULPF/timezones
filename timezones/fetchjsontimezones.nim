@@ -1,13 +1,5 @@
-import httpclient
-import os
-import osproc
-import strformat
-import sequtils
-import strutils
-import times
-import options
-import parseopt2
-import tables
+import httpclient,  os,  osproc,  strformat,  sequtils,  strutils,  times, 
+    options,  parseopt2,  tables
 import private/timezonefile
 
 const TmpDir = "/tmp/fetchtz"

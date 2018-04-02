@@ -1,36 +1,7 @@
-import times
-import strutils
-import tables
-import macros
-import options
-import timezones/private/timezonefile
+import times, strutils, tables, macros, options
+import timezones / private / [timezonefile, sharedtypes]
 
-export timezonefile.Coordinates, timezonefile.CountryCode, timezonefile.cc
-
-proc `==`*(a, b: CountryCode): bool {.borrow.}
-
-
-# This is a bit ugly, but they need to be documented...
-when defined(nimdoc):
-    type
-        Dms* = tuple[deg, min, sec: int16] ## A coordinate specified
-            ## in degrees (deg), minutes (min) and seconds (sec).
-        Coordinates* = tuple[lat, lon: Dms] ## Globe coordinates.
-
-proc `$`*(coords: Coordinates): string =
-    runnableExamples:
-        let loc = ((1'i16, 2'i16, 3'i16), (4'i16, 5'i16, 6'i16))
-        doAssert $loc == r"1° 2′ 3″ N 4° 5′ 6″ E"
-    let latD = if coords.lat.deg < 0: 'S' else: 'N'
-    let lonD = if coords.lon.deg < 0: 'W' else: 'E'
-    "$1° $2′ $3″ $4 $5° $6′ $7″ $8".format(
-        coords.lat.deg, coords.lat.min, coords.lat.sec, latD,
-        coords.lon.deg, coords.lon.min, coords.lon.sec, lonD
-    )
-
-template nodoc(fun: untyped): untyped =
-    when not defined(nimsuggest) and not defined(nimdoc):
-        fun
+export sharedtypes
 
 # type
 #     DateTimeClass = enum
@@ -271,3 +242,8 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
             "STATIC[+" & offsetStr & "]"            
 
     result = initTimezone(tzname, offset)
+
+# Trick to simplify doc gen.
+# This might break in the future
+when defined(nimdoc):
+    include timezones/private/sharedtypes

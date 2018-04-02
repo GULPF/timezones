@@ -1,8 +1,5 @@
-import times
-import strutils, sequtils
-import json
-import tables
-import hashes
+import times, strutils, sequtils, json, tables, hashes
+import sharedtypes
 
 when not defined(JS):
     import os
@@ -16,15 +13,11 @@ type
         isDst*: bool      ## If this transition is daylight savings time
         utcOffset*: int32 ## The active offset (west of UTC) for this transition
 
-    Dms* = tuple[deg, min, sec: int16]
-    Coordinates* = tuple[lat, lon: Dms]
-
     OlsonVersion* = object # E.g 2014b
         year: int32
         release: char
 
     TimezoneId* = int16
-    CountryCode* = distinct array[2, char]
 
     TimezoneData* = object
         transitions*: seq[Transition]
@@ -47,28 +40,10 @@ template cproc(def: untyped) =
     when not defined(JS):
         def
 
-proc `$`*(cc: CountryCode): string =
-    let arr = array[2, char](cc)
-    arr[0] & arr[1]
-
-proc cc*(str: string): CountryCode =
-    if str.len != 2:
-        raise newException(ValueError,
-            "Country code must be exactly two characters: " & str)
-    let arr = [str[0], str[1]]
-    result = arr.CountryCode
-
 proc `%`(cc: CountryCode): JsonNode =
     %($cc)
 
-proc hash*(cc: CountryCode): Hash {.borrow.}
-proc `==`*(a, b: CountryCode): bool {.borrow.}
-
-proc `%`[T](table: Table[string, T]|OrderedTable[string, T]): JsonNode =
-  ## Generic constructor for JSON data. Creates a new ``JObject JsonNode``.
-  result = newJObject()
-  for k, v in table:
-    result[k] = v
+proc hash(cc: CountryCode): Hash {.borrow.}
 
 proc `%`(c: char): JsonNode =
   ## Generic constructor for JSON data. Creates a new `JString JsonNode`.
