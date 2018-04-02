@@ -171,7 +171,7 @@ when not defined(js):
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
-    const timezonesPath {.strdefine.} = "./2018c.json"
+    const timezonesPath {.strdefine.} = "./2018d.json"
 
 when defined(timezonesPath) and defined(timezonesNoEmbeed):
     {.warning: "Both `timezonesPath` and `timezonesNoEmbeed` was passed".}
