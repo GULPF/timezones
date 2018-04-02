@@ -5,7 +5,10 @@ import macros
 import options
 import timezones/private/timezonefile
 
-export timezonefile.Coordinates
+export timezonefile.Coordinates, timezonefile.CountryCode, timezonefile.cc
+
+proc `==`*(a, b: CountryCode): bool {.borrow.}
+
 
 # This is a bit ugly, but they need to be documented...
 when defined(nimdoc):
@@ -111,17 +114,17 @@ proc getId(db: OlsonDatabase, tzname: string): TimezoneId {.inline.} =
         else:
             raise newException(ValueError, "Timezone not found: '$1'" % tzname)
 
-proc countries*(db: OlsonDatabase, tzname: string): seq[string] =
+proc countries*(db: OlsonDatabase, tzname: string): seq[CountryCode] =
     ## Get a list of countries that are known to use ``tzname``.
     ## The result might be empty. Note that some countries use
     ## multiple timezones.
     db.timezones[db.getId(tzname)].countries
 
-proc countries*(db: OlsonDatabase, tz: Timezone): seq[string] {.inline.} =
+proc countries*(db: OlsonDatabase, tz: Timezone): seq[CountryCode] {.inline.} =
     ## Shorthand for ``db.countries(tz.name)``
     db.countries(tz.name)
 
-proc tzNames*(db: OlsonDatabase, country: string): seq[string] =
+proc tzNames*(db: OlsonDatabase, country: CountryCode): seq[string] =
     ## Get a list of timezone names for timezones
     ## known to be used by ``country``.
     let ids = db.idsByCountry[country]
@@ -168,7 +171,7 @@ when not defined(js):
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
-    const timezonesPath {.strdefine.} = "./bundled_tzdb_files/2018c.json"
+    const timezonesPath {.strdefine.} = "./2018c.json"
 
 when defined(timezonesPath) and defined(timezonesNoEmbeed):
     {.warning: "Both `timezonesPath` and `timezonesNoEmbeed` was passed".}
@@ -182,22 +185,23 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
 
     {.push inline.}
 
-    proc countries*(tzname: string): seq[string] =
+    proc countries*(tzname: string): seq[CountryCode] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert countries"Europe/Stockholm" == @[ "SE" ]
-            doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
+            doAssert countries"Europe/Stockholm" == @[ cc"SE" ]
+            doAssert countries"Asia/Bangkok" == @[
+                cc"TH", cc"KH", cc"LA", cc"VN" ]
         EmbeededTzdb.countries(tzname)
 
-    proc countries*(tz: Timezone): seq[string] =
+    proc countries*(tz: Timezone): seq[CountryCode] =
         ## Convenience proc using the embeeded timezone database.
         EmbeededTzdb.countries(tz)
 
-    proc tzNames*(country: string): seq[string] =
+    proc tzNames*(country: CountryCode): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert "SE".tznames == @["Europe/Stockholm"]
-            doAssert "VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
+            doAssert cc"SE".tznames == @["Europe/Stockholm"]
+            doAssert cc"VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
         EmbeededTzdb.tzNames(country)
 
     proc location*(tzname: string): Option[Coordinates] =

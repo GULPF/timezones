@@ -2,6 +2,7 @@ import times
 import strutils, sequtils
 import json
 import tables
+import hashes
 
 when not defined(JS):
     import os
@@ -23,17 +24,17 @@ type
         release: char
 
     TimezoneId* = int16
-    CountryId* = int16
+    CountryCode* = distinct array[2, char]
 
     TimezoneData* = object
         transitions*: seq[Transition]
         coordinates*: Coordinates
-        countries*: seq[string]
+        countries*: seq[CountryCode]
         name*: string
 
     OlsonDatabase* = object
         timezones*: Table[TimezoneId, TimezoneData]
-        idsByCountry*: Table[string, seq[TimezoneId]]
+        idsByCountry*: Table[CountryCode, seq[TimezoneId]]
         idByName*: Table[string, TimezoneId]
         version*: OlsonVersion
 
@@ -46,13 +47,30 @@ template cproc(def: untyped) =
     when not defined(JS):
         def
 
-proc `%`*[T](table: Table[string, T]|OrderedTable[string, T]): JsonNode =
+proc `$`*(cc: CountryCode): string =
+    let arr = array[2, char](cc)
+    arr[0] & arr[1]
+
+proc cc*(str: string): CountryCode =
+    if str.len != 2:
+        raise newException(ValueError,
+            "Country code must be exactly two characters: " & str)
+    let arr = [str[0], str[1]]
+    result = arr.CountryCode
+
+proc `%`(cc: CountryCode): JsonNode =
+    %($cc)
+
+proc hash*(cc: CountryCode): Hash {.borrow.}
+proc `==`*(a, b: CountryCode): bool {.borrow.}
+
+proc `%`[T](table: Table[string, T]|OrderedTable[string, T]): JsonNode =
   ## Generic constructor for JSON data. Creates a new ``JObject JsonNode``.
   result = newJObject()
   for k, v in table:
     result[k] = v
 
-proc `%`*(c: char): JsonNode =
+proc `%`(c: char): JsonNode =
   ## Generic constructor for JSON data. Creates a new `JString JsonNode`.
   new(result)
   result.kind = JString
@@ -81,7 +99,7 @@ proc initOlsonDatabase*(version: OlsonVersion,
                         OlsonDatabase =
     result.version = version
     result.idByName = initTable[string, TimezoneId]()
-    result.idsByCountry = initTable[string, seq[TimezoneId]]()
+    result.idsByCountry = initTable[CountryCode, seq[TimezoneId]]()
     result.timezones = initTable[TimezoneId, TimezoneData]()
 
     var tzId = 1.TimezoneId
@@ -89,11 +107,11 @@ proc initOlsonDatabase*(version: OlsonVersion,
         result.idByName[timezoneData.name] = tzId
         result.timezones[tzId] = timezoneData
 
-        for countryId in timezoneData.countries:
-            if countryId in result.idsByCountry:
-                result.idsByCountry[countryId].add tzId
+        for countryCode in timezoneData.countries:
+            if countryCode in result.idsByCountry:
+                result.idsByCountry[countryCode].add tzId
             else:
-                result.idsByCountry[countryId] = @[tzId]
+                result.idsByCountry[countryCode] = @[tzId]
         
         tzId.inc
 
@@ -122,9 +140,9 @@ proc deserializeOlsonDatabase(jnode: JsonNode): OlsonDatabase =
 
     for tz in jnode["timezones"]:
 
-        var countries = newSeq[string]()
-        for country in tz["countries"].to(seq[string]):
-            countries.add country
+        var countries = newSeq[CountryCode]()
+        for countryStr in tz["countries"].to(seq[string]):
+            countries.add cc(countryStr)
 
         let arr = tz["coordinates"].to(array[6, int16])
         let lat = (arr[0], arr[1], arr[2])

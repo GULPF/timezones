@@ -106,7 +106,7 @@ proc zone1970(zones: var Table[string, TimezoneData]) =
         let (ccStr, coordStr, tzname) = (tokens[0], tokens[1], tokens[2])
         if tzname in zones:
             zones[tzname].coordinates = parseCoordinate(coordStr)
-            zones[tzname].countries = ccStr.split(',')
+            zones[tzname].countries = ccStr.split(',').mapIt(cc(it))
 
 proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
                             startYear, endYear: int32,
@@ -122,19 +122,13 @@ proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
     db.saveToFile(dest)
 
 const helpMsg = """
-Commands:
-    dump  <file>          # Print info about a tzdb file
-    fetch <version>       # Download and process a tzdb file
-    diff  <file1> <file2> # Compare two tzdb files (not implemented)
     --help                # Print this help message
 
-Fetch parameters:
-    --startYear:<year>    # Only store transitions starting from this year.
-    --endYear:<year>      # Only store transitions until this year.
-    --out:<file>          # Write output to this file.
-    --timezones:<zones>   # Only use these timezones.
-    --regions:<regions>   # Only use these regions.
-    --json                # Store transitions as JSON (required for JS support).
+    --startYear:<year>      # Only store transitions starting from this year.
+    --endYear:<year>        # Only store transitions until this year.
+    --out:<file>, -o:<file> # Write output to this file.
+    --timezones:<zones>     # Only use these timezones.
+    --regions:<regions>     # Only use these regions.
 """
 
 type
