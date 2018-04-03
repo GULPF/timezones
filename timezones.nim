@@ -13,11 +13,11 @@ Examples:
     echo initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
     # => 1850-01-01T00:00:00+01:12
 
-    let sweden = tzNames(cc"SE")
+    let sweden = tzNames("SE")
     echo sweden
     # => @["Europe/Stockholm"]
 
-    let usa = tzNames(cc"US")
+    let usa = tzNames("US")
     echo usa
     # => @[
     #   "America/New_York",  "America/Adak",      "America/Phoenix",     "America/Yakutat",
@@ -28,14 +28,19 @@ Examples:
 
     let bangkok = tz"Asia/Bangkok"
     echo bangkok.countries
-    # => @[cc"TH", cc"KH", cc"LA", cc"VN"] 
+    # => @["TH", "KH", "LA", "VN"] 
 ]##
 
-import times, strutils, tables, macros, options
+import times, strutils, sequtils, tables, macros, options
 import timezones / private / [timezonefile, sharedtypes]
 
 export sharedtypes
-export timezonefile.OlsonDatabase
+export timezonefile.TzData
+
+type Country* = string ## A country is represented by
+            ## a two character country code, using ISO 3166-1 alpha-2.
+            ##
+            ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
 
 # type
 #     DateTimeClass = enum
@@ -108,7 +113,7 @@ proc initTimezone(tzname: string, tz: TimezoneData): Timezone =
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
-proc getId(db: OlsonDatabase, tzname: string): TimezoneId {.inline.} =
+proc getId(db: TzData, tzname: string): TimezoneId {.inline.} =
     when compiles(db.getOrDefault(tzname, -1)):
         result = db.getOrDefault(tzname, -1)
         if result == -1:
@@ -119,25 +124,25 @@ proc getId(db: OlsonDatabase, tzname: string): TimezoneId {.inline.} =
         else:
             raise newException(ValueError, "Timezone not found: '$1'" % tzname)
 
-proc countries*(db: OlsonDatabase, tzname: string): seq[CountryCode] =
+proc countries*(db: TzData, tzname: string): seq[Country] =
     ## Get a list of countries that are known to use ``tzname``.
     ## The result might be empty. Note that some countries use
     ## multiple timezones.
-    db.timezones[db.getId(tzname)].countries
+    db.timezones[db.getId(tzname)].countries.mapIt($it)
 
-proc countries*(db: OlsonDatabase, tz: Timezone): seq[CountryCode] {.inline.} =
+proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
     ## Shorthand for ``db.countries(tz.name)``
     db.countries(tz.name)
 
-proc tzNames*(db: OlsonDatabase, country: CountryCode): seq[string] =
+proc tzNames*(db: TzData, country: Country): seq[string] =
     ## Get a list of timezone names for timezones
     ## known to be used by ``country``.
-    let ids = db.idsByCountry[country]
+    let ids = db.idsByCountry[cc(country)]
     result = newSeq[string](ids.len)
     for idx, id in ids:
         result[idx] = db.timezones[id].name
 
-proc location*(db: OlsonDatabase, tzname: string): Option[Coordinates] =
+proc location*(db: TzData, tzname: string): Option[Coordinates] =
     ## Get the coordinates of a timezone. This is generally the coordinates
     ## of the city in the timezone name.
     ## E.g ``db.location"Europe/Stockholm"`` will give the the coordinates
@@ -156,23 +161,23 @@ proc location*(db: OlsonDatabase, tzname: string): Option[Coordinates] =
     if tz.coordinates != default:
         result = some(tz.coordinates)
 
-proc location*(db: OlsonDatabase, tz: Timezone): Option[Coordinates] {.inline.} =
+proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
     ## Shorthand for ``db.location(tz.name)``    
     db.location(tz.name)
 
-proc tz*(db: OlsonDatabase, tzname: string): Timezone {.inline.} =
+proc tz*(db: TzData, tzname: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
     let id = db.getId(tzname)
     result = initTimezone(tzname, db.timezones[id])
  
-proc parseJsonTimezones*(content: string): OlsonDatabase =
+proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
-    timezonefile.parseOlsonDatabase(content)
+    timezonefile.parseTzData(content)
 
 when not defined(js):
-    proc loadJsonTimezones*(path: string): OlsonDatabase =
+    proc loadJsonTimezones*(path: string): TzData =
         ## Load a timezone database from a JSON file.
-        timezonefile.loadOlsonDatabase(path)
+        timezonefile.loadTzData(path)
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
@@ -184,29 +189,28 @@ when defined(timezonesPath) and defined(timezonesNoEmbeed):
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
 
-    let embeededTzdbImpl = parseOlsonDatabase(content)
+    let embeededTzdbImpl = parseTzData(content)
     let EmbeededTzdb* = embeededTzdbImpl ## The embeeded tzdata.
         ## Not available if ``-d:timezonesNoEmbeed`` is used.
 
     {.push inline.}
 
-    proc countries*(tzname: string): seq[CountryCode] =
+    proc countries*(tzname: string): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert countries"Europe/Stockholm" == @[ cc"SE" ]
-            doAssert countries"Asia/Bangkok" == @[
-                cc"TH", cc"KH", cc"LA", cc"VN" ]
+            doAssert countries"Europe/Stockholm" == @[ "SE" ]
+            doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
         EmbeededTzdb.countries(tzname)
 
-    proc countries*(tz: Timezone): seq[CountryCode] =
+    proc countries*(tz: Timezone): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
         EmbeededTzdb.countries(tz)
 
-    proc tzNames*(country: CountryCode): seq[string] =
+    proc tzNames*(country: Country): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert cc"SE".tznames == @["Europe/Stockholm"]
-            doAssert cc"VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
+            doAssert "SE".tznames == @["Europe/Stockholm"]
+            doAssert "VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
         EmbeededTzdb.tzNames(country)
 
     proc location*(tzname: string): Option[Coordinates] =

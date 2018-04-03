@@ -110,7 +110,7 @@ proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
     zic regions
     var zones = zdump(startYear, endYear, tznames)
     zone1970(zones)
-    let db = initOlsonDatabase(version, toSeq(zones.values))
+    let db = initTzData(version, toSeq(zones.values))
     db.saveToFile(dest)
 
 const helpMsg = """

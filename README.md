@@ -13,11 +13,11 @@ let stockholm = tz"Europe/Stockholm"
 echo initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
 # => 1850-01-01T00:00:00+01:12
 
-let sweden = tzNames(cc"SE")
+let sweden = tzNames("SE")
 echo sweden
 # => @["Europe/Stockholm"]
 
-let usa = tzNames(cc"US")
+let usa = tzNames("US")
 echo usa
 # => @[
 #   "America/New_York",  "America/Adak",      "America/Phoenix",     "America/Yakutat",
@@ -28,7 +28,7 @@ echo usa
 
 let bangkok = tz"Asia/Bangkok"
 echo bangkok.countries
-# => @[cc"TH", cc"KH", cc"LA", cc"VN"]
+# => @["TH", "KH", "LA", "VN"] 
 ```
 
 ## API
@@ -48,8 +48,8 @@ To embeed a custom JSON file, simply pass `-d:timezonesPath={path}>`, where `{pa
 
 To load a JSON definition at runtime, either of these procs can be used:
 ```nim
-proc parseJsonTimezones*(content: string): OlsonDatabase
-proc loadJsonTimezones*(path: string): OlsonDatabase # Not for the JS backend
+proc parseJsonTimezones*(content: string): TzData
+proc loadJsonTimezones*(path: string): TzData # Not for the JS backend
 ```
 If you load the JSON timezones at runtime, it's likely that you don't need to the bundled definitions. To disable the embeeded, `-d:timezonesNoEmbeed` can be passed.
 

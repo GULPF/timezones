@@ -25,13 +25,19 @@ type
         countries*: seq[CountryCode]
         name*: string
 
-    OlsonDatabase* = object
+    CountryCode* = distinct array[2, char] ## Two character country code,
+            ## using ISO 3166-1 alpha-2.
+            ## Use ``$`` to get the raw country code.
+            ##
+            ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
+
+    TzData* = object
         timezones*: Table[TimezoneId, TimezoneData]
         idsByCountry*: Table[CountryCode, seq[TimezoneId]]
         idByName*: Table[string, TimezoneId]
         version*: OlsonVersion
 
-    JsonOlsonDatabase* = object ## This is the data structure that is stored
+    JsonTzData* = object ## This is the data structure that is stored
                                 ## in the JSON file.
         timezones: seq[TimezoneData]
         version: OlsonVersion
@@ -39,6 +45,31 @@ type
 template cproc(def: untyped) =
     when not defined(JS):
         def
+
+proc `==`*(a, b: CountryCode): bool {.borrow.}
+    ## Compare two country codes.
+
+proc cc*(str: string): CountryCode =
+    ## Create a ``CountryCode`` from its string representation.
+    ## Note that ``str`` is not validated except for it's length.
+    ## This means that even country codes that (currently) doesn't exist
+    ## in ISO 3166-1 alpha-2 (like ``YX``, ``YZ``, etc) are accepted.
+    runnableExamples:
+        let usa = cc"US"
+        doAssert $usa == "US"
+    if str.len != 2:
+        raise newException(ValueError,
+            "Country code must be exactly two characters: " & str)
+    let arr = [str[0], str[1]]
+    result = arr.CountryCode
+
+proc `$`*(cc: CountryCode): string =
+    ## Get the string representation of ``cc``.
+    runnableExamples:
+        let usa = cc"US"
+        doAssert $usa == "US"
+    let arr = array[2, char](cc)
+    arr[0] & arr[1]
 
 proc `%`(cc: CountryCode): JsonNode =
     %($cc)
@@ -56,8 +87,8 @@ proc `%`(coords: Coordinates): JsonNode = %[
     coords.lon.deg, coords.lon.min, coords.lon.sec,
 ]
 
-proc `%`(db: OlsonDatabase): JsonNode =
-    %JsonOlsonDatabase(
+proc `%`(db: TzData): JsonNode =
+    %JsonTzData(
         timezones: toSeq(db.timezones.values),
         version: db.version
     )
@@ -69,9 +100,9 @@ proc parseOlsonVersion*(versionStr: string): OlsonVersion =
 proc `$`*(version: OlsonVersion): string =
     $version.year & version.release
 
-proc initOlsonDatabase*(version: OlsonVersion,
+proc initTzData*(version: OlsonVersion,
                         zones: seq[TimezoneData]):
-                        OlsonDatabase =
+                        TzData =
     result.version = version
     result.idByName = initTable[string, TimezoneId]()
     result.idsByCountry = initTable[CountryCode, seq[TimezoneId]]()
@@ -91,12 +122,12 @@ proc initOlsonDatabase*(version: OlsonVersion,
         tzId.inc
 
 # XXX: rename
-proc saveToFile*(db: OlsonDatabase, path: string) {.cproc.} =
+proc saveToFile*(db: TzData, path: string) {.cproc.} =
     let fs = newFileStream(path, fmWrite)
     defer: fs.close
     fs.write $(%db)
 
-proc deserializeOlsonDatabase(jnode: JsonNode): OlsonDatabase =
+proc deserializeTzData(jnode: JsonNode): TzData =
     # `to` macro can't handle char
     let version = parseOlsonVersion($jnode["version"]["year"].getInt &
         jnode["version"]["release"].getStr)
@@ -131,12 +162,12 @@ proc deserializeOlsonDatabase(jnode: JsonNode): OlsonDatabase =
             name: tz["name"].getStr
         )
     
-    result = initOlsonDatabase(version, zones)
+    result = initTzData(version, zones)
 
-proc loadOlsonDatabase*(path: string): OlsonDatabase {.cproc.} =
+proc loadTzData*(path: string): TzData {.cproc.} =
     let fs = newFileStream(path, fmRead)
     defer: fs.close
-    parseJson(fs, path).deserializeOlsonDatabase
+    parseJson(fs, path).deserializeTzData
 
-proc parseOlsonDatabase*(content: string): OlsonDatabase =
-    parseJson(content).deserializeOlsonDatabase
+proc parseTzData*(content: string): TzData =
+    parseJson(content).deserializeTzData
