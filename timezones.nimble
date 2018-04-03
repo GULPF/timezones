@@ -1,4 +1,5 @@
 # Package
+import ospaths
 
 version       = "0.1.0"
 author        = "Oscar Nihlgård"
@@ -14,10 +15,23 @@ requires "nim >= 0.17.3"
 task fetch, "Fetch the timezone database":
     exec "fetchjsontimezones " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".json"
 
-task test, "Run the tests":
+task test, "Run the tests (C)":
+    let tzdataPath = thisDir() / "2018d.json"
+
     echo "\nRunning C tests"
     echo "==============="
     exec "nim c --hints:off -r tests/tests.nim"
-    echo "\nRunning JS tests"
+
+    echo "\nRunning tests (JS)"
     echo "================"
     exec "nim js -d:nodejs --hints:off -r tests/tests.nim"
+
+    echo "\nTesting -d:timezonesPath (C)"
+    echo "================"
+    exec "nim c --hints:off -d:timezonesPath='" & tzdataPath & 
+        "' -r tests/tests.nim"
+
+    echo "\nTesting -d:timezonesPath (JS)"
+    echo "================"
+    exec "nim js -d:nodejs --hints:off -d:timezonesPath='" & tzdataPath & 
+        "' -r tests/tests.nim"

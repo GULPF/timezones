@@ -34,6 +34,9 @@ Examples:
 import times, strutils, sequtils, tables, macros, options
 import timezones / private / [timezonefile, sharedtypes]
 
+when not defined(js):
+    import os
+
 export sharedtypes
 export timezonefile.TzData
 
@@ -181,7 +184,17 @@ when not defined(js):
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
-    const timezonesPath {.strdefine.} = "./2018d.json"
+    when not defined(timezonesPath):
+        const timezonesPath = "./2018d.json"
+    else:    
+        const timezonesPath {.strdefine.} = ""
+        # isAbsolute isn't available for JS
+        when not defined(js):
+            when not timezonesPath.isAbsolute:
+                {.error: "Path to custom tz data file must be absolute: " &
+                    timezonesPath.}
+
+        {.hint: "Embedding custom tz data file: " & timezonesPath .}
 
 when defined(timezonesPath) and defined(timezonesNoEmbeed):
     {.warning: "Both `timezonesPath` and `timezonesNoEmbeed` was passed".}
