@@ -1,7 +1,41 @@
+##[
+Examples:
+
+.. code-block:: nim
+    import times
+    import timezones
+
+    let tz = staticTz(hours = -2, minutes = -30)
+    echo initDateTime(1, mJan, 2000, 12, 00, 00, tz)
+    # => 2000-01-01T12:00:00+02:30
+
+    let stockholm = tz"Europe/Stockholm"
+    echo initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
+    # => 1850-01-01T00:00:00+01:12
+
+    let sweden = tzNames(cc"SE")
+    echo sweden
+    # => @["Europe/Stockholm"]
+
+    let usa = tzNames(cc"US")
+    echo usa
+    # => @[
+    #   "America/New_York",  "America/Adak",      "America/Phoenix",     "America/Yakutat",
+    #   "Pacific/Honolulu",  "America/Nome",      "America/Los_Angeles", "America/Detroit",
+    #   "America/Chicago",   "America/Boise",     "America/Juneau",      "America/Metlakatla",
+    #   "America/Anchorage", "America/Menominee", "America/Sitka",       "America/Denver"
+    # ]
+
+    let bangkok = tz"Asia/Bangkok"
+    echo bangkok.countries
+    # => @[cc"TH", cc"KH", cc"LA", cc"VN"] 
+]##
+
 import times, strutils, tables, macros, options
 import timezones / private / [timezonefile, sharedtypes]
 
 export sharedtypes
+export timezonefile.OlsonDatabase
 
 # type
 #     DateTimeClass = enum

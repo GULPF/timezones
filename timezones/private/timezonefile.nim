@@ -90,7 +90,7 @@ proc initOlsonDatabase*(version: OlsonVersion,
         
         tzId.inc
 
-## XXX: rename
+# XXX: rename
 proc saveToFile*(db: OlsonDatabase, path: string) {.cproc.} =
     let fs = newFileStream(path, fmWrite)
     defer: fs.close
