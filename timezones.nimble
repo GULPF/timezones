@@ -15,10 +15,10 @@ requires "nim >= 0.18.0"
 task fetch, "Fetch the timezone database":
     exec "fetchjsontimezones " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".json"
 
-task test, "Run the tests (C)":
+task test, "Run the tests":
     let tzdataPath = thisDir() / "2018d.json"
 
-    echo "\nRunning C tests"
+    echo "\nRunning C tests (C)"
     echo "==============="
     exec "nim c --hints:off -r tests/tests.nim"
 
@@ -35,3 +35,6 @@ task test, "Run the tests (C)":
     echo "================"
     exec "nim js -d:nodejs --hints:off -d:timezonesPath='" & tzdataPath & 
         "' -r tests/tests.nim"
+
+task docs, "Generate docs":
+    exec "nim doc -o:docs/timezones.html timezones.nim"
