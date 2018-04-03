@@ -114,13 +114,16 @@ proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
     db.saveToFile(dest)
 
 const helpMsg = """
-    --help                # Print this help message
+    fetchjsontimezones <version> # Download <version>, e.g '2018d'.
 
-    --startYear:<year>      # Only store transitions starting from this year.
-    --endYear:<year>        # Only store transitions until this year.
-    --out:<file>, -o:<file> # Write output to this file.
-    --timezones:<zones>     # Only use these timezones.
-    --regions:<regions>     # Only use these regions.
+    --help                       # Print this help message
+
+    --startYear:<year>           # Only store transitions starting from this year.
+    --endYear:<year>             # Only store transitions until this year.
+    --out:<file>, -o:<file>      # Write output to this file.
+                                 # Defaults to './<version>.json'.
+    --timezones:<zones>          # Only store transitions for these timezones.
+    --regions:<regions>          # Only store transitions for these regions.
 """
 
 type

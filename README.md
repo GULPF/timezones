@@ -1,4 +1,4 @@
-The `timezones` module implements methods for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions. It's still in an early stage and the API is likely to change. Both the C backend and the JS backend is supported.
+The `timezones` module implements methods for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions. Both the C backend and the JS backend is supported.
 
 ## Usage
 ```nim
@@ -32,45 +32,45 @@ echo bangkok.countries
 ```
 
 ## API
-todo
+Documentation can be generated using `nim doc timezones.nim`.
 
 ## How does it work
-The timezone definitions from a IANA timezone database release are stored in a JSON file. This repo includes the currently latest release (2018c.json), but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.
+The timezone definitions from a [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) release are stored in a JSON file. This repo includes the currently latest release (2018d.json), but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.
 
 If you want control over when the timezone definitions are updated, there are two
 options:
 - Embeed a custom JSON file
 - Load a JSON file at runtime
 
-Both options require you to generate the JSON file yourself. See fetchjsontimezones for information on how to accomplish that.
+Both options require you to generate the JSON file yourself. See [fetchjsontimezones](#fetchjsontimezones) for information on how to accomplish that.
 
-To embeed a custom JSON file, simply pass `-d:timezonesPath={path}>`, where `{path}` is the absolute path to the file.
+To embeed a custom JSON file, simply pass `-d:timezonesPath={path}>`, where `{path}` is the **absolute** path to the file.
 
 To load a JSON definition at runtime, either of these procs can be used:
 ```nim
 proc parseJsonTimezones*(content: string): TzData
-proc loadJsonTimezones*(path: string): TzData # Not for the JS backend
+proc loadJsonTimezones*(path: string): TzData # Not available for the JS backend
 ```
-If you load the JSON timezones at runtime, it's likely that you don't need to the bundled definitions. To disable the embeeded, `-d:timezonesNoEmbeed` can be passed.
+If you load the JSON timezones at runtime, it's likely that you don't need the bundled definitions. To disable the embeededing of the bundled JSON file, `-d:timezonesNoEmbeed` can be passed.
 
-## fetchjsontimezones
+## fetchjsontimezones <a name="fetchjsontimezones"></a>
+
+**NOTE**: The `fetchjsontimezones` tool isn't supported on Windows for now.
+
+`fetchjsontimezones` is a command line tool for downloading IANA timezone database releases and converting them to the JSON format used by the `timezones` module. It's part of this repo and is installed by running `nimble install timezones`. Using `fetchjsontimezones` isn't required for using the `timezones` module, as long as you OK with using the bundled timezone data.
 
 Usage (`fetchjsontimezones --help`):
  ```
-    --help                  # Print this help message
+    fetchjsontimezones <version> # Download <version>, e.g '2018d'.
 
-    --startYear:<year>      # Only store transitions starting from this year.
-    --endYear:<year>        # Only store transitions until this year.
-    --out:<file>, -o:<file> # Write output to this file.
-    --timezones:<zones>     # Only use these timezones.
-    --regions:<regions>     # Only use these regions.
+    --help                       # Print this help message
+
+    --startYear:<year>           # Only store transitions starting from this year.
+    --endYear:<year>             # Only store transitions until this year.
+    --out:<file>, -o:<file>      # Write output to this file.
+                                 # Defaults to './<version>.json'.
+    --timezones:<zones>          # Only store transitions for these timezones.
+    --regions:<regions>          # Only store transitions for these regions.
 ```
 
-For example, `fetchjsontimezones 2017c --out:2017c.bin --startYear:1900 --endYear:2030` will create a tzdb file called `2017c.bin` containing
-timzone transitions for the years 1900 to 2030 generated from the `2017c` timezone database release.
-
-The `fetchjsontimezones` tool is not supported on Windows.
-
-## Using a custom tzdb file
-Of course, downloading your own timezone file is not very useful unless you can instruct `timezones` to use it instead of the bundled one.
-To indicate that a different timezone file should be used, send the __absolute__ path to the file as a command line define: `--define:embedTzdb=<path>`.
+For example, `fetchjsontimezones 2017c --out:tzdata.json --startYear:1900 --endYear:2030` will create a tzdb file called `tzdata.json` containing timzone transitions for the years 1900 to 2030 generated from the `2017c` timezone database release.
