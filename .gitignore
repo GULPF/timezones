@@ -5,3 +5,4 @@
 nimcache/
 *.html
 *.out
+!docs/*.html
