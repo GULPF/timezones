@@ -1,14 +1,14 @@
 # Package
 import ospaths
 
-version       = "0.1.0"
+version       = "0.2.0"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
 bin = @["timezones/fetchjsontimezones"]
 skipDirs = @["tests"]
-requires "nim >= 0.17.3"
+requires "nim >= 0.18.0"
 
 # Tasks
 
