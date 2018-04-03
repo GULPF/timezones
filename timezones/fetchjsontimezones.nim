@@ -1,6 +1,6 @@
 import httpclient,  os,  osproc,  strformat,  sequtils,  strutils,  times, 
     options,  parseopt2,  tables
-import private/timezonefile
+import private / [timezonefile, sharedtypes]
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
