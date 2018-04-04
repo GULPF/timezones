@@ -70,3 +70,9 @@ test "Etc/UTC":
     let dt = initDateTime(1, mJan, 1970, 00, 00, 00, utc())
     check $dt == $(dt.inZone(tz"Etc/UTC"))
     check (countries"Etc/UTC").len == 0
+
+test "Dynamic tz data loading":
+    const jsonContent = staticRead("../2018d.json")
+    let tzdata = parseJsonTimezones(jsonContent)
+    check tzdata.tzNames("SE") == @["Europe/Stockholm"]
+    check tzdata.version == "2018d"
