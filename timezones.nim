@@ -140,10 +140,11 @@ proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
 proc tzNames*(db: TzData, country: Country): seq[string] =
     ## Get a list of timezone names for timezones
     ## known to be used by ``country``.
-    let ids = db.idsByCountry[cc(country)]
-    result = newSeq[string](ids.len)
-    for idx, id in ids:
-        result[idx] = db.timezones[id].name
+    let code = cc(country)
+    if code in db.idsByCountry:
+        result = db.idsByCountry[code].mapIt(db.timezones[it].name)
+    else:
+        result = @[]
 
 proc location*(db: TzData, tzname: string): Option[Coordinates] =
     ## Get the coordinates of a timezone. This is generally the coordinates

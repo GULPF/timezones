@@ -60,6 +60,7 @@ test "validation":
     expect ValueError, (discard location(str))
     expect ValueError, (discard countries(str))
     expect ValueError, (discard tzNames(str))
+    discard tzNames("YX") # Should not raise exception
 
 test "location":
     check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"

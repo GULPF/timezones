@@ -60,6 +60,9 @@ proc cc*(str: string): CountryCode =
     if str.len != 2:
         raise newException(ValueError,
             "Country code must be exactly two characters: " & str)
+    if not str[0].isUpperAscii or not str[1].isUpperAscii:
+        raise newException(ValueError,
+            "Country code must be upper case: " & str)
     let arr = [str[0], str[1]]
     result = arr.CountryCode
 
