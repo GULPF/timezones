@@ -38,12 +38,35 @@ when not defined(js):
     import os
 
 export sharedtypes
-export timezonefile.TzData
 
-type Country* = string ## A country is represented by
-            ## a two character country code, using ISO 3166-1 alpha-2.
-            ##
-            ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
+type
+    Country* = string ## A country is represented by
+        ## a two character country code, using ISO 3166-1 alpha-2.
+        ##
+        ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
+    
+    # Instead of re-exporting timezonefile.TzData we need to do it like this
+    # to avoid having the fields of timezonefile.TzData re-exported as well.
+    TzData* = distinct timezonefile.TzData ## Contains the timezone data
+        ## for a specific IANA timezone database version.
+
+# These are templates to avoid taking the perf hit of a function call
+# in JS (note that {.inline.} relies on the C compiler).
+
+template timezones(db: TzData): Table[TimezoneId, TimezoneData] =
+    timezonefile.TzData(db).timezones
+
+template idsByCountry(db: TzData): Table[CountryCode, seq[TimezoneId]] =
+    timezonefile.TzData(db).idsByCountry
+
+template idByName(db: TzData): Table[string, TimezoneId] =
+    timezonefile.TzData(db).idByName
+
+proc version*(db: TzData): string =
+    ## The IANA timezone database release string.
+    ## 
+    ## E.g 2010a, 2018d, etc.
+    $timezonefile.TzData(db).version
 
 # type
 #     DateTimeClass = enum
@@ -117,8 +140,8 @@ proc initTimezone(tzname: string, tz: TimezoneData): Timezone =
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
 proc getId(db: TzData, tzname: string): TimezoneId {.inline.} =
-    when compiles(db.getOrDefault(tzname, -1)):
-        result = db.getOrDefault(tzname, -1)
+    when compiles(db.idByName.getOrDefault(tzname, -1)):
+        result = db.idByName.getOrDefault(tzname, -1)
         if result == -1:
             raise newException(ValueError, "Timezone not found: '$1'" % tzname)
     else:
@@ -176,12 +199,12 @@ proc tz*(db: TzData, tzname: string): Timezone {.inline.} =
  
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
-    timezonefile.parseTzData(content)
+    timezonefile.parseTzData(content).TzData
 
 when not defined(js):
     proc loadJsonTimezones*(path: string): TzData =
         ## Load a timezone database from a JSON file.
-        timezonefile.loadTzData(path)
+        timezonefile.loadTzData(path).TzData
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
@@ -203,8 +226,8 @@ when defined(timezonesPath) and defined(timezonesNoEmbeed):
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
 
-    let embeededTzdbImpl = parseTzData(content)
-    let EmbeededTzdb* = embeededTzdbImpl ## The embeeded tzdata.
+    let embeededTzDataImpl = parseTzData(content).TzData
+    let EmbeededTzdb* = embeededTzDataImpl ## The embeeded tzdata.
         ## Not available if ``-d:timezonesNoEmbeed`` is used.
 
     {.push inline.}
@@ -223,8 +246,8 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
     proc tzNames*(country: Country): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert "SE".tznames == @["Europe/Stockholm"]
-            doAssert "VN".tznames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
+            doAssert "SE".tzNames == @["Europe/Stockholm"]
+            doAssert "VN".tzNames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
         EmbeededTzdb.tzNames(country)
 
     proc location*(tzname: string): Option[Coordinates] =
