@@ -89,7 +89,7 @@ template binarySeach(transitions: seq[Transition],
             lower = mid
     lower
 
-proc initTimezone(tzname: string, tz: TimezoneData): Timezone =
+proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
     # xxx it might be bad to keep the transitions in the closure,
     # since they're so many.
     # Probably better if the closure keeps a small reference to the index in the
@@ -132,20 +132,20 @@ proc initTimezone(tzname: string, tz: TimezoneData): Timezone =
         result.utcOffset = -transition.utcOffset
         result.adjTime = fromUnix(time.toUnix + transition.utcOffset)
 
-    result.name = tzname
+    result.name = tzName
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
-proc getTz(db: TzData, tzname: string): TimezoneData {.inline.} =
-    result = db.tzByName.getOrDefault(tzname)
+proc getTz(db: TzData, tzName: string): TimezoneData {.inline.} =
+    result = db.tzByName.getOrDefault(tzName)
     if result == nil:
-        raise newException(ValueError, "Timezone not found: '$1'" % tzname)
+        raise newException(ValueError, "Timezone not found: '$1'" % tzName)
 
-proc countries*(db: TzData, tzname: string): seq[Country] =
-    ## Get a list of countries that are known to use ``tzname``.
+proc countries*(db: TzData, tzName: string): seq[Country] =
+    ## Get a list of countries that are known to use ``tzName``.
     ## The result might be empty. Note that some countries use
     ## multiple timezones.
-    db.getTz(tzname).countries.mapIt($it)
+    db.getTz(tzName).countries.mapIt($it)
 
 proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
     ## Shorthand for ``db.countries(tz.name)``
@@ -160,7 +160,7 @@ proc tzNames*(db: TzData, country: Country): seq[string] =
     else:
         result = @[]
 
-proc location*(db: TzData, tzname: string): Option[Coordinates] =
+proc location*(db: TzData, tzName: string): Option[Coordinates] =
     ## Get the coordinates of a timezone. This is generally the coordinates
     ## of the city in the timezone name.
     ## E.g ``db.location"Europe/Stockholm"`` will give the the coordinates
@@ -171,7 +171,7 @@ proc location*(db: TzData, tzname: string): Option[Coordinates] =
     ## coordinates available.
     ## However, if the timezone name is not found, then a ``ValueError`` will
     ## be raised.
-    let tz = db.getTz(tzname)
+    let tz = db.getTz(tzName)
     # `TimezoneData` should probably store `coordinates` as an `Option`,
     # but (0, 0) is in the middle of the ocean so it only matters in principle.
     var default: Coordinates
@@ -182,9 +182,9 @@ proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
     ## Shorthand for ``db.location(tz.name)``    
     db.location(tz.name)
 
-proc tz*(db: TzData, tzname: string): Timezone {.inline.} =
+proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
-    result = initTimezone(tzname, db.getTz(tzname))
+    result = initTimezone(tzName, db.getTz(tzName))
  
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
@@ -225,12 +225,12 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
 
     {.push inline.}
 
-    proc countries*(tzname: string): seq[Country] =
+    proc countries*(tzName: string): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             doAssert countries"Europe/Stockholm" == @[ "SE" ]
             doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
-        EmbeededTzData.countries(tzname)
+        EmbeededTzData.countries(tzName)
 
     proc countries*(tz: Timezone): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
@@ -243,13 +243,13 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
             doAssert "VN".tzNames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
         EmbeededTzData.tzNames(country)
 
-    proc location*(tzname: string): Option[Coordinates] =
+    proc location*(tzName: string): Option[Coordinates] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             import options
             doAssert $(location"Europe/Stockholm") == r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
             # doAssert $(location"Etc/UTC") == "None"
-        EmbeededTzData.location(tzname)
+        EmbeededTzData.location(tzName)
 
     proc location*(tz: Timezone): Option[Coordinates] {.inline.} =
         ## Convenience proc using the embeeded timezone database
@@ -258,18 +258,18 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
             doAssert utc().location.isNone
         EmbeededTzData.location(tz)
 
-    proc tz*(tzname: string): Timezone =
+    proc tz*(tzName: string): Timezone =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             import times
             let sweden = tz"Europe/Stockholm"
             let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
             doAssert $dt == "1850-01-01T00:00:00+01:12"
-        EmbeededTzData.tz(tzname)
+        EmbeededTzData.tz(tzName)
 
     {.pop.}
 
-proc initTimezone(tzname: string, offset: int): Timezone =
+proc initTimezone(tzName: string, offset: int): Timezone =
 
     proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
         result.isDst = false
@@ -281,7 +281,7 @@ proc initTimezone(tzname: string, offset: int): Timezone =
         result.utcOffset = offset
         result.adjTime = fromUnix(time.toUnix - offset)
 
-    result.name = tzname
+    result.name = tzName
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
@@ -303,13 +303,13 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
         ":" & abs(minutes).intToStr(2) & 
         ":" & abs(seconds).intToStr(2)
     
-    let tzname =
+    let tzName =
         if offset > 0:
             "STATIC[-" & offsetStr & "]"
         else:
             "STATIC[+" & offsetStr & "]"            
 
-    result = initTimezone(tzname, offset)
+    result = initTimezone(tzName, offset)
 
 # Trick to simplify doc gen.
 # This might break in the future
