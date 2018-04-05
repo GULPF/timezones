@@ -63,7 +63,7 @@ proc version*(db: TzData): string =
     ## The IANA timezone database release string.
     ## 
     ## E.g 2010a, 2018d, etc.
-    $timezonefile.TzData(db).version
+    timezonefile.TzData(db).version
 
 # type
 #     DateTimeClass = enum

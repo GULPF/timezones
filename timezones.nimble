@@ -13,7 +13,7 @@ requires "nim >= 0.18.0"
 # Tasks
 
 task fetch, "Fetch the timezone database":
-    exec "fetchjsontimezones " & paramStr(2) & " --out:./bundled_tzdb_files/" & paramStr(2) & ".json"
+    exec "fetchjsontimezones " & paramStr(2) & " --out:" & (thisDir() / (paramStr(2) & ".json"))
 
 task test, "Run the tests":
     let tzdataPath = thisDir() / "2018d.json"

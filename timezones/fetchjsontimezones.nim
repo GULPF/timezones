@@ -14,11 +14,11 @@ const DefaultRegions = @[
     "europe", "northamerica", "southamerica", "pacificnew"
 ]
 
-proc download(version: OlsonVersion) =
-    let tarFile = TmpDir / fmt"{$version}.tar.gz"
+proc download(version: string) =
+    let tarFile = TmpDir / fmt"{version}.tar.gz"
     if not tarFile.fileExists:
         var http = newHttpClient()
-        let url = fmt"https://www.iana.org/time-zones/repository/releases/tzdata{$version}.tar.gz"
+        let url = fmt"https://www.iana.org/time-zones/repository/releases/tzdata{version}.tar.gz"
         http.downloadFile url, tarFile
     removeDir UnpackDir
     createDir UnpackDir
@@ -100,7 +100,7 @@ proc zone1970(zones: var Table[string, TimezoneData]) =
             zones[tzname].coordinates = parseCoordinate(coordStr)
             zones[tzname].countries = ccStr.split(',').mapIt(cc(it))
 
-proc fetchTimezoneDatabase*(version: OlsonVersion, dest = ".",
+proc fetchTimezoneDatabase*(version: string, dest = ".",
                             startYear, endYear: int32,
                             tznames, regions: Option[seq[string]]) =
     createDir TmpDir
@@ -189,8 +189,8 @@ when isMainModule:
     var opts = getCliOptions()
     doAssert opts.arguments.len == 1
     echo "Fetching and processing timezone data. This might take a while..."
-    let version = parseOlsonVersion(opts.arguments[0])
-    let defaultFilePath = getCurrentDir() / ($version & ".json")
+    let version = opts.arguments[0]
+    let defaultFilePath = getCurrentDir() / (version & ".json")
     let filePath = opts.outfile.get(defaultFilePath)
     fetchTimezoneDatabase(version, filePath, opts.startYear,
         opts.endYear, opts.tznames, opts.regions)

@@ -12,10 +12,6 @@ type
         isDst*: bool      ## If this transition is daylight savings time
         utcOffset*: int32 ## The active offset (west of UTC) for this transition
 
-    OlsonVersion* = object # E.g 2014b
-        year: int32
-        release: char
-
     TimezoneData* = ref object
         transitions*: seq[Transition]
         coordinates*: Coordinates
@@ -31,12 +27,12 @@ type
     TzData* = object
         tzsByCountry*: Table[CountryCode, seq[TimezoneData]]
         tzByName*: Table[string, TimezoneData]
-        version*: OlsonVersion
+        version*: string
 
     JsonTzData* = object ## This is the data structure that is stored
                          ## in the JSON file.
         timezones: seq[TimezoneData]
-        version: OlsonVersion
+        version: string
 
 template cproc(def: untyped) =
     when not defined(JS):
@@ -92,14 +88,7 @@ proc `%`(db: TzData): JsonNode =
         version: db.version
     )
 
-proc parseOlsonVersion*(versionStr: string): OlsonVersion =
-    result.year = versionStr[0..3].parseInt.int32
-    result.release = versionStr[4]
-
-proc `$`*(version: OlsonVersion): string =
-    $version.year & version.release
-
-proc initTzData*(version: OlsonVersion, zones: seq[TimezoneData]): TzData =
+proc initTzData*(version: string, zones: seq[TimezoneData]): TzData =
     result.version = version
     result.tzByName = initTable[string, TimezoneData]()
     result.tzsByCountry = initTable[CountryCode, seq[TimezoneData]]()
@@ -120,9 +109,7 @@ proc saveToFile*(db: TzData, path: string) {.cproc.} =
 
 proc deserializeTzData(jnode: JsonNode): TzData =
     # `to` macro can't handle char
-    let version = parseOlsonVersion($jnode["version"]["year"].getInt &
-        jnode["version"]["release"].getStr)
-
+    let version = $jnode["version"].getStr
     var zones = newSeq[TimezoneData]()
 
     zones.add TimezoneData(
