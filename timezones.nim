@@ -35,7 +35,7 @@ import times, strutils, sequtils, tables, macros, options
 import timezones / private / [timezonefile, sharedtypes]
 
 when not defined(js):
-    import os
+    import os, streams
 
 export sharedtypes
 
@@ -90,10 +90,6 @@ template binarySeach(transitions: seq[Transition],
     lower
 
 proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
-    # xxx it might be bad to keep the transitions in the closure,
-    # since they're so many.
-    # Probably better if the closure keeps a small reference to the index in the
-    # shared db.
     proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
         let index = tz.transitions.binarySeach(startAdj, adjTime)
         let transition = tz.transitions[index]
@@ -188,12 +184,18 @@ proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
  
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
-    timezonefile.parseTzData(content).TzData
+    parseTzData(content).TzData
 
 when not defined(js):
+    proc parseJsonTimezones*(s: Stream): TzData =
+        ## Parse a timezone database from its JSON representation.
+        parseTzData(s).TzData
+
     proc loadJsonTimezones*(path: string): TzData =
         ## Load a timezone database from a JSON file.
-        timezonefile.loadTzData(path).TzData
+        let fs = openFileStream(path, fmRead)
+        defer: fs.close
+        parseTzData(fs).TzData
 
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
@@ -262,8 +264,8 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             import times
-            let sweden = tz"Europe/Stockholm"
-            let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
+            let stockholm = tz"Europe/Stockholm"
+            let dt = initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
             doAssert $dt == "1850-01-01T00:00:00+01:12"
         EmbeededTzData.tz(tzName)
 
@@ -290,6 +292,7 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     runnableExamples:
         import times
         let tz = staticTz(hours = -2, minutes = -30)
+        doAssert $tz == "STATIC[+02:30:00]" 
         let dt = initDateTime(1, mJan, 2000, 12, 00, 00, tz)
         doAssert $dt == "2000-01-01T12:00:00+02:30"
 

@@ -2,8 +2,7 @@ import times, strutils, sequtils, json, tables, hashes
 import sharedtypes
 
 when not defined(JS):
-    import os
-    import streams
+    import os, streams
 
 type
     Transition* = object
@@ -156,10 +155,9 @@ proc deserializeTzData(jnode: JsonNode): TzData =
     
     result = initTzData(version, zones)
 
-proc loadTzData*(path: string): TzData {.cproc.} =
-    let fs = openFileStream(path, fmRead)
-    defer: fs.close
-    parseJson(fs, path).deserializeTzData
+proc parseTzData*(s: string): TzData =
+    parseJson(s).deserializeTzData
 
-proc parseTzData*(content: string): TzData =
-    parseJson(content).deserializeTzData
+when not defined(js):
+    proc parseTzData*(s: Stream): TzData =
+        parseJson(s).deserializeTzData

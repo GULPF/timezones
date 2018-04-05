@@ -77,3 +77,11 @@ test "Dynamic tz data loading":
     let tzdata = parseJsonTimezones(jsonContent)
     check tzdata.tzNames("SE") == @["Europe/Stockholm"]
     check tzdata.version == "2018d"
+
+    # We use `timezonesPath` so we don't need to resolve the path ourself
+    when defined(timezonesPath) and not defined(js):
+        const timezonesPath {.strdefine.} = ""
+        block:
+            let tzdata = loadJsonTimezones(timezonesPath)
+            check tzdata.tzNames("SE") == @["Europe/Stockholm"]
+            check tzdata.version == "2018d"
