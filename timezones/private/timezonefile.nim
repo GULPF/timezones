@@ -38,7 +38,7 @@ type
         version*: OlsonVersion
 
     JsonTzData* = object ## This is the data structure that is stored
-                                ## in the JSON file.
+                         ## in the JSON file.
         timezones: seq[TimezoneData]
         version: OlsonVersion
 
@@ -168,7 +168,7 @@ proc deserializeTzData(jnode: JsonNode): TzData =
     result = initTzData(version, zones)
 
 proc loadTzData*(path: string): TzData {.cproc.} =
-    let fs = newFileStream(path, fmRead)
+    let fs = openFileStream(path, fmRead)
     defer: fs.close
     parseJson(fs, path).deserializeTzData
 
