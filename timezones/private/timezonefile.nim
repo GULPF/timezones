@@ -17,9 +17,7 @@ type
         year: int32
         release: char
 
-    TimezoneId* = int16
-
-    TimezoneData* = object
+    TimezoneData* = ref object
         transitions*: seq[Transition]
         coordinates*: Coordinates
         countries*: seq[CountryCode]
@@ -32,9 +30,8 @@ type
             ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
 
     TzData* = object
-        timezones*: Table[TimezoneId, TimezoneData]
-        idsByCountry*: Table[CountryCode, seq[TimezoneId]]
-        idByName*: Table[string, TimezoneId]
+        tzsByCountry*: Table[CountryCode, seq[TimezoneData]]
+        tzByName*: Table[string, TimezoneData]
         version*: OlsonVersion
 
     JsonTzData* = object ## This is the data structure that is stored
@@ -92,7 +89,7 @@ proc `%`(coords: Coordinates): JsonNode = %[
 
 proc `%`(db: TzData): JsonNode =
     %JsonTzData(
-        timezones: toSeq(db.timezones.values),
+        timezones: toSeq(db.tzByName.values),
         version: db.version
     )
 
@@ -103,26 +100,18 @@ proc parseOlsonVersion*(versionStr: string): OlsonVersion =
 proc `$`*(version: OlsonVersion): string =
     $version.year & version.release
 
-proc initTzData*(version: OlsonVersion,
-                        zones: seq[TimezoneData]):
-                        TzData =
+proc initTzData*(version: OlsonVersion, zones: seq[TimezoneData]): TzData =
     result.version = version
-    result.idByName = initTable[string, TimezoneId]()
-    result.idsByCountry = initTable[CountryCode, seq[TimezoneId]]()
-    result.timezones = initTable[TimezoneId, TimezoneData]()
+    result.tzByName = initTable[string, TimezoneData]()
+    result.tzsByCountry = initTable[CountryCode, seq[TimezoneData]]()
 
-    var tzId = 1.TimezoneId
     for timezoneData in zones:
-        result.idByName[timezoneData.name] = tzId
-        result.timezones[tzId] = timezoneData
-
+        result.tzByName[timezoneData.name] = timezoneData
         for countryCode in timezoneData.countries:
-            if countryCode in result.idsByCountry:
-                result.idsByCountry[countryCode].add tzId
+            if countryCode in result.tzsByCountry:
+                result.tzsByCountry[countryCode].add timezoneData
             else:
-                result.idsByCountry[countryCode] = @[tzId]
-        
-        tzId.inc
+                result.tzsByCountry[countryCode] = @[timezoneData]
 
 # XXX: rename
 proc saveToFile*(db: TzData, path: string) {.cproc.} =

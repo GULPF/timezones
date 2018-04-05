@@ -53,14 +53,11 @@ type
 # These are templates to avoid taking the perf hit of a function call
 # in JS (note that {.inline.} relies on the C compiler).
 
-template timezones(db: TzData): Table[TimezoneId, TimezoneData] =
-    timezonefile.TzData(db).timezones
+template tzsByCountry(db: TzData): Table[CountryCode, seq[TimezoneData]] =
+    timezonefile.TzData(db).tzsByCountry
 
-template idsByCountry(db: TzData): Table[CountryCode, seq[TimezoneId]] =
-    timezonefile.TzData(db).idsByCountry
-
-template idByName(db: TzData): Table[string, TimezoneId] =
-    timezonefile.TzData(db).idByName
+template tzByName(db: TzData): Table[string, TimezoneData] =
+    timezonefile.TzData(db).tzByName
 
 proc version*(db: TzData): string =
     ## The IANA timezone database release string.
@@ -139,22 +136,16 @@ proc initTimezone(tzname: string, tz: TimezoneData): Timezone =
     result.zoneInfoFromTz = zoneInfoFromTz
     result.zoneInfoFromUtc = zoneInfoFromUtc
 
-proc getId(db: TzData, tzname: string): TimezoneId {.inline.} =
-    when compiles(db.idByName.getOrDefault(tzname, -1)):
-        result = db.idByName.getOrDefault(tzname, -1)
-        if result == -1:
-            raise newException(ValueError, "Timezone not found: '$1'" % tzname)
-    else:
-        if tzname in db.idByName:
-            result = db.idByName[tzname]
-        else:
-            raise newException(ValueError, "Timezone not found: '$1'" % tzname)
+proc getTz(db: TzData, tzname: string): TimezoneData {.inline.} =
+    result = db.tzByName.getOrDefault(tzname)
+    if result == nil:
+        raise newException(ValueError, "Timezone not found: '$1'" % tzname)
 
 proc countries*(db: TzData, tzname: string): seq[Country] =
     ## Get a list of countries that are known to use ``tzname``.
     ## The result might be empty. Note that some countries use
     ## multiple timezones.
-    db.timezones[db.getId(tzname)].countries.mapIt($it)
+    db.getTz(tzname).countries.mapIt($it)
 
 proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
     ## Shorthand for ``db.countries(tz.name)``
@@ -164,8 +155,8 @@ proc tzNames*(db: TzData, country: Country): seq[string] =
     ## Get a list of timezone names for timezones
     ## known to be used by ``country``.
     let code = cc(country)
-    if code in db.idsByCountry:
-        result = db.idsByCountry[code].mapIt(db.timezones[it].name)
+    if code in db.tzsByCountry:
+        result = db.tzsByCountry[code].mapIt(it.name)
     else:
         result = @[]
 
@@ -180,8 +171,7 @@ proc location*(db: TzData, tzname: string): Option[Coordinates] =
     ## coordinates available.
     ## However, if the timezone name is not found, then a ``ValueError`` will
     ## be raised.
-    let id = db.getId(tzname)
-    let tz = db.timezones[id]
+    let tz = db.getTz(tzname)
     # `TimezoneData` should probably store `coordinates` as an `Option`,
     # but (0, 0) is in the middle of the ocean so it only matters in principle.
     var default: Coordinates
@@ -194,8 +184,7 @@ proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
 
 proc tz*(db: TzData, tzname: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
-    let id = db.getId(tzname)
-    result = initTimezone(tzname, db.timezones[id])
+    result = initTimezone(tzname, db.getTz(tzname))
  
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
