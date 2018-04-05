@@ -216,8 +216,12 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
 
     let embeededTzDataImpl = parseTzData(content).TzData
-    let EmbeededTzdb* = embeededTzDataImpl ## The embeeded tzdata.
+    let EmbeededTzData* = embeededTzDataImpl ## The embeeded tzdata.
         ## Not available if ``-d:timezonesNoEmbeed`` is used.
+
+    when not defined(nimdoc):
+        template EmbeededTzdb*(): TzData
+            {.deprecated: "Renamed to EmbeededTzData".} = EmbeededTzData
 
     {.push inline.}
 
@@ -226,18 +230,18 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
         runnableExamples:
             doAssert countries"Europe/Stockholm" == @[ "SE" ]
             doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
-        EmbeededTzdb.countries(tzname)
+        EmbeededTzData.countries(tzname)
 
     proc countries*(tz: Timezone): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
-        EmbeededTzdb.countries(tz)
+        EmbeededTzData.countries(tz)
 
     proc tzNames*(country: Country): seq[string] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             doAssert "SE".tzNames == @["Europe/Stockholm"]
             doAssert "VN".tzNames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
-        EmbeededTzdb.tzNames(country)
+        EmbeededTzData.tzNames(country)
 
     proc location*(tzname: string): Option[Coordinates] =
         ## Convenience proc using the embeeded timezone database.
@@ -245,14 +249,14 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
             import options
             doAssert $(location"Europe/Stockholm") == r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
             # doAssert $(location"Etc/UTC") == "None"
-        EmbeededTzdb.location(tzname)
+        EmbeededTzData.location(tzname)
 
     proc location*(tz: Timezone): Option[Coordinates] {.inline.} =
         ## Convenience proc using the embeeded timezone database
         runnableExamples:
             import times
             doAssert utc().location.isNone
-        EmbeededTzdb.location(tz)
+        EmbeededTzData.location(tz)
 
     proc tz*(tzname: string): Timezone =
         ## Convenience proc using the embeeded timezone database.
@@ -261,7 +265,7 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
             let sweden = tz"Europe/Stockholm"
             let dt = initDateTime(1, mJan, 1850, 00, 00, 00, sweden)
             doAssert $dt == "1850-01-01T00:00:00+01:12"
-        EmbeededTzdb.tz(tzname)
+        EmbeededTzData.tz(tzname)
 
     {.pop.}
 
