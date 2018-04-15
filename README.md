@@ -1,4 +1,11 @@
-The `timezones` module implements methods for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions. Both the C backend and the JS backend is supported.
+The `timezones` module implements methods for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions.
+
+Notable features:
+- Works for both C and JS
+- Compatible with the standard library - integrates into the `times` module
+- Allows embeeding timezone data into executable
+- Allows loading and switching timezone data during runtime
+- Allows generating customized timezone data, containing only the timezones needed for your use case
 
 ## Usage
 ```nim
@@ -34,7 +41,7 @@ echo bangkok.countries
 ## API
 [Generated docs are available here](https://gulpf.github.io/timezones/timezones.html).
 
-## How does it work
+## Advanced usage
 The timezone definitions from a [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) release are stored in a JSON file. This repo includes the currently latest release (2018d.json), but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.
 
 If you want control over when the timezone definitions are updated, there are two
@@ -44,14 +51,14 @@ options:
 
 Both options require you to generate the JSON file yourself. See [fetchjsontimezones](#fetchjsontimezones) for information on how to accomplish that.
 
-To embeed a custom JSON file, simply pass `-d:timezonesPath={path}>`, where `{path}` is the **absolute** path to the file.
+To embeed a custom JSON file, simply pass `-d:timezonesPath={path}`, where `{path}` is the **absolute** path to the file.
 
 To load a JSON definition at runtime, either of these procs can be used:
 ```nim
 proc parseJsonTimezones*(content: string): TzData
 proc loadJsonTimezones*(path: string): TzData # Not available for the JS backend
 ```
-If you load the JSON timezones at runtime, it's likely that you don't need the bundled definitions. To disable the embeededing of the bundled JSON file, `-d:timezonesNoEmbeed` can be passed.
+If you load the JSON timezones at runtime, it's likely that you don't need the bundled definitions. To disable the embeededing of the bundled JSON file, `-d:timezonesNoEmbeed` can be passed. This will reduce the size of the executable.
 
 ## fetchjsontimezones <a name="fetchjsontimezones"></a>
 
