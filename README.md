@@ -64,7 +64,7 @@ If you load the JSON timezones at runtime, it's likely that you don't need the b
 
 **NOTE**: The `fetchjsontimezones` tool isn't supported on Windows for now.
 
-`fetchjsontimezones` is a command line tool for downloading IANA timezone database releases and converting them to the JSON format used by the `timezones` module. It's part of this repo and is installed by running `nimble install timezones`. Using `fetchjsontimezones` isn't required for using the `timezones` module, as long as you OK with using the bundled timezone data.
+`fetchjsontimezones` is a command line tool for downloading IANA timezone database releases and converting them to the JSON format used by the `timezones` module. It's part of this repo and is installed by running `nimble install timezones`. Using `fetchjsontimezones` isn't required for using the `timezones` module, unless you want control over which timezone data is used.
 
 Usage (`fetchjsontimezones --help`):
  ```
