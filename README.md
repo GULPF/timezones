@@ -35,7 +35,7 @@ echo bangkok.countries
 [Generate docs are available here](https://gulpf.github.io/timezones/timezones.html).
 
 ## How does it work
-The timezone definitions from a [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) release are stored in a JSON file. This repo includes the currently latest release (2018d.json), but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.
+The timezone definitions from a [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) release are stored in a JSON file. This repo includes the currently latest release (2018e.json), but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.
 
 If you want control over when the timezone definitions are updated, there are two
 options:

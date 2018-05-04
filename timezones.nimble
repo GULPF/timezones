@@ -16,7 +16,7 @@ task fetch, "Fetch the timezone database":
     exec "fetchjsontimezones " & paramStr(2) & " --out:" & (thisDir() / (paramStr(2) & ".json"))
 
 task test, "Run the tests":
-    let tzdataPath = thisDir() / "2018d.json"
+    let tzdataPath = thisDir() / "2018e.json"
 
     echo "\nRunning C tests (C)"
     echo "==============="
