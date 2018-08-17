@@ -44,10 +44,11 @@ type
         ## a two character country code, using ISO 3166-1 alpha-2.
         ##
         ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
-    
+
     # Instead of re-exporting timezonefile.TzData we need to do it like this
     # to avoid having the fields of timezonefile.TzData re-exported as well.
-    TzData* = distinct timezonefile.TzData ## Contains the timezone data
+    TzDataImpl = distinct timezonefile.TzData
+    TzData* = TzDataImpl ## Contains the timezone data
         ## for a specific IANA timezone database version.
 
 # These are templates to avoid taking the perf hit of a function call
@@ -60,9 +61,10 @@ template tzByName(db: TzData): Table[string, TimezoneData] =
     timezonefile.TzData(db).tzByName
 
 proc version*(db: TzData): string =
-    ## The IANA timezone database release string.
-    ## 
-    ## E.g 2010a, 2018d, etc.
+    ## The version of the IANA timezone database being represented by ``db``.
+    ## The string consist of the year plus a letter. For example, ``"2018a"``
+    ## is the first database release of 2018, ``"2018b"``
+    ## the second one and so on.
     timezonefile.TzData(db).version
 
 # type

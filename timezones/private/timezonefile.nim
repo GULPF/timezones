@@ -71,12 +71,6 @@ proc `%`(cc: CountryCode): JsonNode =
 
 proc hash(cc: CountryCode): Hash {.borrow.}
 
-proc `%`(c: char): JsonNode =
-  ## Generic constructor for JSON data. Creates a new `JString JsonNode`.
-  new(result)
-  result.kind = JString
-  result.str = $c
-
 proc `%`(coords: Coordinates): JsonNode = %[
     coords.lat.deg, coords.lat.min, coords.lat.sec,
     coords.lon.deg, coords.lon.min, coords.lon.sec,
