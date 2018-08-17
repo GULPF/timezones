@@ -90,7 +90,7 @@ template binarySeach(transitions: seq[Transition],
     lower
 
 proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
-    proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
+    proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
         let index = tz.transitions.binarySeach(startAdj, adjTime)
         let transition = tz.transitions[index]
 
@@ -102,12 +102,13 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
             if adjTime.toUnix > next.startAdj - offsetDiff:
                 result.isDst = next.isDst
                 result.utcOffset = -next.utcOffset
-                result.adjTime = fromUnix(adjTime.toUnix + offsetDiff)
+                let adjTime = adjTime + initDuration(seconds = offsetDiff)
+                result.time = adjTime + initDuration(seconds = result.utcOffset)
                 return
 
         result.isDst = transition.isDst
         result.utcOffset = -transition.utcOffset
-        result.adjTime = adjTime
+        result.time = adjTime + initDuration(seconds = result.utcOffset)
 
         if index != 0:
             let prevTransition = tz.transitions[index - 1]
@@ -122,15 +123,13 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
                     result.isDst = prevTransition.isDst
                     result.utcOffset = -prevTransition.utcOffset
                 
-    proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.} =
+    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
         let transition = tz.transitions[tz.transitions.binarySeach(startUtc, time)]
         result.isDst = transition.isDst
         result.utcOffset = -transition.utcOffset
-        result.adjTime = fromUnix(time.toUnix + transition.utcOffset)
+        result.time = time
 
-    result.name = tzName
-    result.zoneInfoFromTz = zoneInfoFromTz
-    result.zoneInfoFromUtc = zoneInfoFromUtc
+    result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
 
 proc getTz(db: TzData, tzName: string): TimezoneData {.inline.} =
     result = db.tzByName.getOrDefault(tzName)
@@ -271,21 +270,18 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
 
     {.pop.}
 
-proc initTimezone(tzName: string, offset: int): Timezone =
-
-    proc zoneInfoFromTz(adjTime: Time): ZonedTime {.locks: 0.} =
+proc newTimezone(tzName: string, offset: int): Timezone =
+    proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
         result.isDst = false
         result.utcOffset = offset
-        result.adjTime = adjTime
+        result.time = adjTime + initDuration(seconds = offset)
 
-    proc zoneInfoFromUtc(time: Time): ZonedTime {.locks: 0.}=
+    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.}=
         result.isDst = false
         result.utcOffset = offset
-        result.adjTime = fromUnix(time.toUnix - offset)
+        result.time = time
 
-    result.name = tzName
-    result.zoneInfoFromTz = zoneInfoFromTz
-    result.zoneInfoFromUtc = zoneInfoFromUtc
+    result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
 
 proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     ## Create a timezone using a static offset from UTC.
@@ -310,9 +306,9 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
         if offset > 0:
             "STATIC[-" & offsetStr & "]"
         else:
-            "STATIC[+" & offsetStr & "]"            
+            "STATIC[+" & offsetStr & "]"
 
-    result = initTimezone(tzName, offset)
+    result = newTimezone(tzName, offset)
 
 # Trick to simplify doc gen.
 # This might break in the future
