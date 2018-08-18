@@ -1,8 +1,8 @@
-import times, strutils, sequtils, json, tables, hashes
+import std / [strutils, sequtils, json, tables, hashes]
 import sharedtypes
 
 when not defined(JS):
-    import os, streams
+    import std / [os, streams]
 
 type
     Transition* = object

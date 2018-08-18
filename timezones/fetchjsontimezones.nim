@@ -1,5 +1,5 @@
-import httpclient,  os,  osproc,  strformat,  sequtils,  strutils,  times, 
-    options,  parseopt2,  tables
+import std / [httpclient, os, osproc, strformat, sequtils, strutils, times,
+    options,  parseopt2,  tables]
 import private / [timezonefile, sharedtypes]
 
 const TmpDir = "/tmp/fetchtz"

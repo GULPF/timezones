@@ -2,7 +2,7 @@
 # ``timezonefile`` but also need to be exported by the end user.
 # This seperation is done so that ``include`` can be abused for doc gen.
 
-import strutils
+import std / strutils
 
 type
 

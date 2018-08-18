@@ -1,7 +1,5 @@
-import times
-import unittest
-import options
-import "../timezones.nim"
+import std / [times, unittest, options]
+import .. / timezones
 
 let sweden = tz"Europe/Stockholm"
 

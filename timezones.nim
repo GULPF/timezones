@@ -31,11 +31,11 @@ Examples:
     # => @["TH", "KH", "LA", "VN"] 
 ]##
 
-import times, strutils, sequtils, tables, macros, options
+import std / [times, strutils, sequtils, tables, macros, options]
 import timezones / private / [timezonefile, sharedtypes]
 
 when not defined(js):
-    import os, streams
+    import std / [os, streams]
 
 export sharedtypes
 
