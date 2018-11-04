@@ -27,9 +27,11 @@ test "from utc":
     check claimedOffset == utc.toTime.toUnix - local.toTime.toUnix
 
 test "staticTz":
-    check staticTz(hours = 2).name == "STATIC[-02:00:00]"
-    check staticTz(hours = 2, minutes = 1).name == "STATIC[-02:01:00]"    
-    check staticTz(hours = 2, minutes = 1, seconds = 13).name == "STATIC[-02:01:13]"
+    check staticTz(hours = 2).name == "-02:00"
+    check staticTz(hours = 2, minutes = 1).name == "-02:01"
+    check staticTz(hours = 2, minutes = 1, seconds = 13).name == "-02:01:13"
+    check staticTz(hours = -1, minutes = -2, seconds = -3).name == "+01:02:03"
+    check staticTz(hours = -1, minutes = 1).name == "+00:59"
 
     block:
         let tz = staticTz(seconds = 1)

@@ -279,25 +279,29 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     runnableExamples:
         import times
         let tz = staticTz(hours = -2, minutes = -30)
-        doAssert $tz == "STATIC[+02:30:00]" 
+        doAssert $tz == "+02:30"
         let dt = initDateTime(1, mJan, 2000, 12, 00, 00, tz)
         doAssert $dt == "2000-01-01T12:00:00+02:30"
 
     let offset = hours * 3600 + minutes * 60 + seconds
-    let hours = offset div 3600
-    var rem = offset mod 3600
-    let minutes = rem div 60
-    let seconds = rem mod 60
+    let absOffset = abs(offset)
+    let hours = absOffset div 3600
+    let rem = absOffset mod 3600
+    let minutes = abs(rem div 60)
+    let seconds = abs(rem mod 60)
+
+    var offsetStr = abs(hours).intToStr(2) &
+        ":" & abs(minutes).intToStr(2)
     
-    let offsetStr = abs(hours).intToStr(2) &
-        ":" & abs(minutes).intToStr(2) & 
-        ":" & abs(seconds).intToStr(2)
+    var secondsStr = abs(seconds)
+    if seconds > 0:
+        offsetStr.add ':' & secondsStr.intToStr(2)
     
     let tzName =
         if offset > 0:
-            "STATIC[-" & offsetStr & "]"
+            "-" & offsetStr
         else:
-            "STATIC[+" & offsetStr & "]"
+            "+" & offsetStr
 
     result = newTimezone(tzName, offset)
 
