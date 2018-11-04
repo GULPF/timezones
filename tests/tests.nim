@@ -52,13 +52,11 @@ when not defined(js):
         check large.utcOffset == -32400
 
 test "validation":
-    # Name must be placed in a variable so that 
-    # static validation isn't triggered.
     let str = "Invalid string"
     expect ValueError, (discard tz(str))
-    expect ValueError, (discard location(str))
-    expect ValueError, (discard countries(str))
-    expect ValueError, (discard tzNames(str))
+    doAssert location(str).isNone
+    doAssert countries(str).len == 0
+    expect ValueError, (discard tz(str))
     discard tzNames("YX") # Should not raise exception
 
 test "location":

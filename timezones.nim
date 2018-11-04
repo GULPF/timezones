@@ -67,18 +67,8 @@ proc version*(db: TzData): string =
     ## the second one and so on.
     timezonefile.TzData(db).version
 
-# type
-#     DateTimeClass = enum
-#         Unknown, Valid, Invalid, Ambiguous
-# # Check C# for naming.
-# proc isAmbiguous(tz: Timezone, ndt: NaiveDateTime): bool = discard
-# proc isValid(tz: Timezone, ndt: NaiveDateTime): bool = discard
-# proc hasDst(tz: Timezone): bool = discard
-# proc classify(tz: Timezone, ndt: NaiveDateTIme): DateTimeClass = discard
-
 template binarySeach(transitions: seq[Transition],
                      field: untyped, t: Time): int =
-
     var lower = 0
     var upper = transitions.high
     while lower < upper:
@@ -133,16 +123,15 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
 
     result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
 
-proc getTz(db: TzData, tzName: string): TimezoneData {.inline.} =
-    result = db.tzByName.getOrDefault(tzName)
-    if result == nil:
-        raise newException(ValueError, "Timezone not found: '$1'" % tzName)
+proc getTz(db: TzData, tzName: string): Option[TimezoneData] {.inline.} =
+    result = option(db.tzByName.getOrDefault(tzName))
 
 proc countries*(db: TzData, tzName: string): seq[Country] =
     ## Get a list of countries that are known to use ``tzName``.
     ## The result might be empty. Note that some countries use
     ## multiple timezones.
-    db.getTz(tzName).countries.mapIt($it)
+    let tz = db.getTz(tzName).get(nil)
+    result = if tz.isNil: @[] else: tz.countries.mapIt($it)
 
 proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
     ## Shorthand for ``db.countries(tz.name)``
@@ -151,11 +140,11 @@ proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
 proc tzNames*(db: TzData, country: Country): seq[string] =
     ## Get a list of timezone names for timezones
     ## known to be used by ``country``.
+    ##
+    ## Raises a ``ValueError`` if ``country`` isn't exactly two characters.
     let code = cc(country)
-    if code in db.tzsByCountry:
-        result = db.tzsByCountry[code].mapIt(it.name)
-    else:
-        result = @[]
+    let zonesData = db.tzsByCountry.getOrDefault(code, newSeq[TimezoneData]())
+    result = zonesData.mapIt(it.name)
 
 proc location*(db: TzData, tzName: string): Option[Coordinates] =
     ## Get the coordinates of a timezone. This is generally the coordinates
@@ -163,16 +152,14 @@ proc location*(db: TzData, tzName: string): Option[Coordinates] =
     ## E.g ``db.location"Europe/Stockholm"`` will give the the coordinates
     ## of Stockholm, the capital of Sweden.
     ##
-    ## Note that this is not defined for all timezones in the tzdb database,
-    ## so this proc will return an ``none(Coordinates)`` when there is no
-    ## coordinates available.
-    ## However, if the timezone name is not found, then a ``ValueError`` will
-    ## be raised.
-    let tz = db.getTz(tzName)
+    ## Will return ``none(Coordinates)`` if the timezone either doesn't
+    ## exist in the database, or if it doesn't have any coordinates in the
+    ## database.
+    let tz = db.getTz(tzName).get(nil)
     # `TimezoneData` should probably store `coordinates` as an `Option`,
     # but (0, 0) is in the middle of the ocean so it only matters in principle.
     var default: Coordinates
-    if tz.coordinates != default:
+    if not tz.isNil and tz.coordinates != default:
         result = some(tz.coordinates)
 
 proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
@@ -181,7 +168,11 @@ proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
 
 proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
     ## Create a timezone using a name from the IANA timezone database.
-    result = initTimezone(tzName, db.getTz(tzName))
+    let tz = db.getTz(tzName).get(nil)
+    if tz.isNil:
+        raise newException(ValueError,
+            "Timezone does not exist in database: " & tzName)
+    result = initTimezone(tzName, tz)
  
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
@@ -249,16 +240,14 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
     proc location*(tzName: string): Option[Coordinates] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            import options
+            import times, options
             doAssert $(location"Europe/Stockholm") == r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
-            # doAssert $(location"Etc/UTC") == "None"
+            doAssert (location"Etc/UTC").isNone
+            doAssert utc().location.isNone
         EmbeededTzData.location(tzName)
 
     proc location*(tz: Timezone): Option[Coordinates] {.inline.} =
         ## Convenience proc using the embeeded timezone database
-        runnableExamples:
-            import times
-            doAssert utc().location.isNone
         EmbeededTzData.location(tz)
 
     proc tz*(tzName: string): Timezone =
