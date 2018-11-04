@@ -126,7 +126,7 @@ proc deserializeTzData(jnode: JsonNode): TzData =
         let arr = tz["coordinates"].to(array[6, int16])
         let lat = (arr[0], arr[1], arr[2])
         let lon = (arr[3], arr[4], arr[5])
-        let coordinates = (lat, lon)
+        let coordinates = initCoordinates(lat, lon)
 
         zones.add TimezoneData(
             transitions: tz["transitions"].to(seq[Transition]),
