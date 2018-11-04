@@ -32,7 +32,7 @@ Examples:
 ]##
 
 import std / [times, strutils, sequtils, tables, macros, options]
-import timezones / private / [timezonefile, sharedtypes]
+import timezones / private / [timezonefile, sharedtypes, tzversion]
 
 when not defined(js):
     import std / [os, streams]
@@ -201,7 +201,7 @@ when not defined(js):
 # xxx the silly default path is because it's relative to "timezonefile.nim"
 when not defined(nimsuggest):
     when not defined(timezonesPath):
-        const timezonesPath = "./2018e.json"
+        const timezonesPath = "./" & Version & ".json"
     else:    
         const timezonesPath {.strdefine.} = ""
         # isAbsolute isn't available for JS

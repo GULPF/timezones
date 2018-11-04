@@ -1,5 +1,6 @@
 import std / [times, unittest, options]
 import .. / timezones
+import .. / timezones / private / tzversion
 
 let sweden = tz"Europe/Stockholm"
 
@@ -71,10 +72,10 @@ test "Etc/UTC":
     check (countries"Etc/UTC").len == 0
 
 test "Dynamic tz data loading":
-    const jsonContent = staticRead("../2018e.json")
+    const jsonContent = staticRead("../" & Version & ".json")
     let tzdata = parseJsonTimezones(jsonContent)
     check tzdata.tzNames("SE") == @["Europe/Stockholm"]
-    check tzdata.version == "2018e"
+    check tzdata.version == Version
 
     # We use `timezonesPath` so we don't need to resolve the path ourself
     when defined(timezonesPath) and not defined(js):
@@ -82,4 +83,4 @@ test "Dynamic tz data loading":
         block:
             let tzdata = loadJsonTimezones(timezonesPath)
             check tzdata.tzNames("SE") == @["Europe/Stockholm"]
-            check tzdata.version == "2018e"
+            check tzdata.version == Version

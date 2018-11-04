@@ -1,5 +1,5 @@
-# Package
-import ospaths
+import std / ospaths
+import timezones / private / tzversion
 
 version       = "0.3.0"
 author        = "Oscar Nihlgård"
@@ -16,7 +16,7 @@ task fetch, "Fetch the timezone database":
     exec "fetchjsontimezones " & paramStr(2) & " --out:" & (thisDir() / (paramStr(2) & ".json"))
 
 task test, "Run the tests":
-    let tzdataPath = thisDir() / "2018e.json"
+    let tzdataPath = thisDir() / (Version & ".json")
 
     echo "\nRunning C tests (C)"
     echo "==============="
@@ -28,7 +28,7 @@ task test, "Run the tests":
 
     echo "\nTesting -d:timezonesPath (C)"
     echo "================"
-    exec "nim c --hints:off -d:timezonesPath='" & tzdataPath & 
+    exec "nim c --hints:off -d:timezonesPath='" & tzdataPath &
         "' -r tests/tests.nim"
 
     echo "\nTesting -d:timezonesPath (JS)"
