@@ -1,4 +1,4 @@
-import std / [strutils, sequtils, json, tables, hashes]
+import std / [strutils, sequtils, json, tables, hashes, macros]
 import sharedtypes
 
 when not defined(JS):
@@ -34,9 +34,10 @@ type
         timezones: seq[TimezoneData]
         version: string
 
-template cproc(def: untyped) =
-    when not defined(JS):
-        def
+macro cproc(def: untyped): typed =
+    result = quote do:
+        when not defined(JS):
+            `def`
 
 proc `==`*(a, b: CountryCode): bool {.borrow.}
     ## Compare two country codes.
