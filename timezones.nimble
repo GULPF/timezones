@@ -7,7 +7,8 @@ description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
 bin = @["timezones/fetchjsontimezones"]
-skipDirs = @["tests"]
+installDirs = @["timezones"]
+installFiles = @[Version & ".json", "timezones.nim"]
 requires "nim >= 0.19.0"
 
 # Tasks
