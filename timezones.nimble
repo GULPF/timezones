@@ -1,14 +1,14 @@
 import std / ospaths
 import timezones / private / tzversion
 
-version       = "0.3.0"
+version       = "0.4.0"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
 
 bin = @["timezones/fetchjsontimezones"]
 skipDirs = @["tests"]
-requires "nim >= 0.18.1"
+requires "nim >= 0.19.0"
 
 # Tasks
 
@@ -18,7 +18,7 @@ task fetch, "Fetch the timezone database":
 task test, "Run the tests":
     let tzdataPath = thisDir() / (Version & ".json")
 
-    echo "\nRunning C tests (C)"
+    echo "\nRunning tests (C)"
     echo "==============="
     exec "nim c --hints:off -r tests/tests.nim"
 
