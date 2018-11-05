@@ -5,18 +5,28 @@ Examples:
     import times
     import timezones
 
-    let tz = staticTz(hours = -2, minutes = -30)
-    echo initDateTime(1, mJan, 2000, 12, 00, 00, tz)
+    # Create a timezone representing a static offset from UTC.
+    let zone = tz"+02:30"
+    echo initDateTime(1, mJan, 2000, 12, 00, 00, zone)
     # => 2000-01-01T12:00:00+02:30
 
+    # Static offset timezones can also be created with the proc ``staticTz``,
+    # which is preferable if the offset is only known at runtime.
+    doAsert zone == staticTz(hours = -2, minutes = -30)
+
+    # Create a timezone representing a timezone in the IANA timezone database.
     let stockholm = tz"Europe/Stockholm"
     echo initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
     # => 1850-01-01T00:00:00+01:12
 
+    # Get a list of timezones used by a country.
+    # The country is specified with it's two character country code,
+    # see ISO 3166-1 alpha-2.
     let sweden = tzNames("SE")
     echo sweden
     # => @["Europe/Stockholm"]
 
+    # Note that some countries use many different timezones.
     let usa = tzNames("US")
     echo usa
     # => @[
@@ -26,9 +36,11 @@ Examples:
     #   "America/Anchorage", "America/Menominee", "America/Sitka",       "America/Denver"
     # ]
 
+    # Get a list of countries that are known to use a timezone.
+    # Note that some timezones are used by multiple countries.
     let bangkok = tz"Asia/Bangkok"
     echo bangkok.countries
-    # => @["TH", "KH", "LA", "VN"] 
+    # => @["TH", "KH", "LA", "VN"]
 ]##
 
 import std / [times, strutils, sequtils, tables, macros, options]
@@ -37,7 +49,8 @@ import timezones / private / [timezonefile, sharedtypes, tzversion]
 when not defined(js):
     import std / [os, streams]
 
-export sharedtypes
+when not defined(nimdoc):
+    export sharedtypes
 
 type
     Country* = string ## A country is represented by
@@ -114,7 +127,7 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
                         adjUnix < transition.startAdj - offsetDiff:
                     result.isDst = prevTransition.isDst
                     result.utcOffset = -prevTransition.utcOffset
-                
+
     proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
         let transition = tz.transitions[tz.transitions.binarySeach(startUtc, time)]
         result.isDst = transition.isDst
@@ -228,12 +241,12 @@ proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
         else:
             error()
     else:
-    let tz = db.getTz(tzName).get(nil)
-    if tz.isNil:
-        raise newException(ValueError,
-            "Timezone does not exist in database: " & tzName)
-    result = initTimezone(tzName, tz)
- 
+        let tz = db.getTz(tzName).get(nil)
+        if tz.isNil:
+            raise newException(ValueError,
+                "Timezone does not exist in database: " & tzName)
+        result = initTimezone(tzName, tz)
+
 proc parseJsonTimezones*(content: string): TzData =
     ## Parse a timezone database from its JSON representation.
     parseTzData(content).TzData
@@ -339,11 +352,11 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
 
     var offsetStr = abs(hours).intToStr(2) &
         ":" & abs(minutes).intToStr(2)
-    
+
     var secondsStr = abs(seconds)
     if seconds > 0:
         offsetStr.add ':' & secondsStr.intToStr(2)
-    
+
     let tzName =
         if offset > 0:
             "-" & offsetStr
