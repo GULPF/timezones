@@ -166,8 +166,68 @@ proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
     ## Shorthand for ``db.location(tz.name)``    
     db.location(tz.name)
 
+proc newTimezone(tzName: string, offset: int): Timezone =
+    proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
+        result.isDst = false
+        result.utcOffset = offset
+        result.time = adjTime + initDuration(seconds = offset)
+
+    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.}=
+        result.isDst = false
+        result.utcOffset = offset
+        result.time = time
+
+    result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
+
 proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
-    ## Create a timezone using a name from the IANA timezone database.
+    ## Create a timezone from a timezone name, where the timezone name is one
+    ## of the following:
+    ## - The string ``"LOCAL"``, representing the systems local timezone.
+    ## - A string of the form ``"±HH:MM:SS"`` or ``"±HH:MM"``, representing a fixed
+    ##   offset from UTC. Note that the sign will be the opposite when compared
+    ##   to ``staticTz``. For example, ``tz"+01:00"`` is the same as
+    ##   ``staticTz(hour = -1)``.
+    ## - A timezone name from the
+    ##   `IANA timezone database <https://www.iana.org/time-zones>`_, also listed
+    ##   on `wikipedia <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>`_.
+    ##
+    ## In case ``tzName`` does not follow any of these formats, or the timezone
+    ## name doesn't exist in the database, a ``ValueError`` exception is raised.
+    if tzName.len == 0:
+        raise newException(ValueError, "Timezone name can't be empty")
+
+    if tzName == "LOCAL":
+        result = local()
+    elif tzName[0] in {'-', '+'}:
+        template error =
+            raise newException(ValueError,
+                "Invalid static timezone offset: " & tzName)
+        template parseTwoDigits(str: string, idx: int): int =
+            if str[idx] notin { '0'..'9' } or str[idx + 1] notin { '0'..'9' }:
+                echo "err"
+                error()
+            (str[idx].ord - '0'.ord) * 10 + (str[idx].ord - '0'.ord)
+
+        let sign = if tzName[0] == '-': -1 else: +1
+        case tzName.len
+        of 6:
+            if tzName[3] != ':':
+                error()
+            let h = parseTwoDigits(tzName, 1)
+            let m = parseTwoDigits(tzName, 4)
+            let offset = h * 3600 + m * 60
+            result = newTimezone(tzName, offset)
+        of 9:
+            if tzName[3] != ':' or tzName[6] != ':':
+                error()
+            let h = parseTwoDigits(tzName, 1)
+            let m = parseTwoDigits(tzName, 4)
+            let s = parseTwoDigits(tzName, 7)
+            let offset = h * 3600 + m * 60 + s
+            result = newTimezone(tzName, offset)
+        else:
+            error()
+    else:
     let tz = db.getTz(tzName).get(nil)
     if tz.isNil:
         raise newException(ValueError,
@@ -260,19 +320,6 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
         EmbeededTzData.tz(tzName)
 
     {.pop.}
-
-proc newTimezone(tzName: string, offset: int): Timezone =
-    proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
-        result.isDst = false
-        result.utcOffset = offset
-        result.time = adjTime + initDuration(seconds = offset)
-
-    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.}=
-        result.isDst = false
-        result.utcOffset = offset
-        result.time = time
-
-    result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
 
 proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     ## Create a timezone using a static offset from UTC.

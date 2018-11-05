@@ -37,11 +37,23 @@ test "staticTz":
         let tz = staticTz(seconds = 1)
         let dt = initDateTime(1, mJan, 2000, 00, 00, 00, tz)
         check dt.utcOffset == 1
-    
+
     block:
         let tz = staticTz(hours = -2, minutes = -30)
         let dt = initDateTime(1, mJan, 2000, 12, 0, 0, tz)
         doAssert $dt == "2000-01-01T12:00:00+02:30"
+
+test "LOCAL":
+    doAssert tz"LOCAL" == local()
+
+test """Static offset with tz"..."""":
+    check staticTz(hours = 2).name == tz("-02:00").name
+    check staticTz(hours = 2, minutes = 1).name == tz("-02:01").name
+    check staticTz(hours = 2, minutes = 1, seconds = 13).name == tz("-02:01:13").name
+    check staticTz(hours = -1, minutes = -2, seconds = -3).name == tz("+01:02:03").name
+    check staticTz(hours = -1, minutes = 1).name == tz("+00:59").name
+    expect ValueError, (discard tz"-2")
+    expect ValueError, (discard tz"-2:00")
 
 # Does not yet work due to overflow/underflows bugs in the JS backend
 # for int64. See #6752.
