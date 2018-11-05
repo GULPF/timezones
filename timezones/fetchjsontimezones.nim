@@ -82,11 +82,11 @@ proc parseCoordinate(str: string): Coordinates =
     of "+DDMM+DDDMM".len:
         let lat = (str[0..2].parse, str[3..4].parse,  0'i16)
         let lon = (str[5..8].parse, str[9..10].parse, 0'i16)
-        result = (lat, lon)
+        result = initCoordinates(lat, lon)
     of "+DDMMSS+DDDMMSS".len:
         let lat = (str[0..2].parse,  str[3..4].parse,   str[5..6].parse)
         let lon = (str[7..10].parse, str[11..12].parse, str[13..14].parse)
-        result = (lat, lon)
+        result = initCoordinates(lat, lon)
     else:
         doAssert false
 
