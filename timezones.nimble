@@ -1,7 +1,7 @@
 import std / ospaths
 import timezones / private / tzversion
 
-version       = "0.4.2"
+version       = "0.4.3"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
