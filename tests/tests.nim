@@ -16,7 +16,7 @@ test "dst edge cases":
     check initDateTime(29, mOct, 2017, 01, 00, 00, sweden).isDst
     check initDateTime(29, mOct, 2017, 03, 01, 00, sweden).format(f) == "2017-10-29 03:01 +01:00"
     check (not initDateTime(29, mOct, 2017, 03, 01, 00, sweden).isDst)
-    
+    check initDateTime(10, mOct, 2018, 12, 00, 00, sweden).format(f) == "2018-10-10 12:00 +02:00"
     check initDateTime(21, mOct, 2017, 01, 00, 00).format(f) == "2017-10-21 01:00 +02:00"
 
 test "from utc":
@@ -25,6 +25,10 @@ test "from utc":
     let claimedOffset = local.utcOffset
     local.utcOffset = 0
     check claimedOffset == utc.toTime.toUnix - local.toTime.toUnix
+
+test "europe/stockholm":
+    let dt = initDateTime(27, mOct, 2018, 12, 00, 00, sweden)
+    doAssert $dt == "2018-10-27T12:00:00+02:00"
 
 test "staticTz":
     check staticTz(hours = 2).name == "-02:00"

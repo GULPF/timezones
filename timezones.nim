@@ -81,18 +81,33 @@ proc version*(db: TzData): string =
     timezonefile.TzData(db).version
 
 template binarySeach(transitions: seq[Transition],
-                     field: untyped, t: Time): int =
+                     field: untyped,
+                     t: Time): int =
+    # We subtract 1, because we wan't the lower bound index
+    # even if there's an exact match (because we prefer the earlier
+    # transition when ambiguous).
+    # TODO: Try to improve this a bit
+    let unix = t.toUnix - 1
     var lower = 0
     var upper = transitions.high
-    while lower < upper:
-        var mid = (lower + upper) div 2
-        if transitions[mid].field >= t.toUnix:
+    var mid: int
+    var success = false
+
+    while lower <= upper:
+        mid = (lower + upper) div 2
+        if transitions[mid].field < unix:
+            lower = mid + 1
+        elif transitions[mid].field > unix:
             upper = mid - 1
-        elif lower == mid:
-            break
         else:
-            lower = mid
-    lower
+            success = true
+            break
+
+    if success:
+        mid
+    else:
+        # Note that `upper` is actually the lower value now (see the loop)
+        max(0, upper)
 
 proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
     proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
