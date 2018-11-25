@@ -30,10 +30,12 @@ Examples:
     let usa = tzNames("US")
     echo usa
     # => @[
-    #   "America/New_York",  "America/Adak",      "America/Phoenix",     "America/Yakutat",
-    #   "Pacific/Honolulu",  "America/Nome",      "America/Los_Angeles", "America/Detroit",
-    #   "America/Chicago",   "America/Boise",     "America/Juneau",      "America/Metlakatla",
-    #   "America/Anchorage", "America/Menominee", "America/Sitka",       "America/Denver"
+    #   "America/New_York",    "America/Adak",      "America/Phoenix",
+    #   "America/Yakutat",     "Pacific/Honolulu",  "America/Nome",
+    #   "America/Los_Angeles", "America/Detroit",   "America/Chicago",
+    #   "America/Boise",       "America/Juneau",    "America/Metlakatla",
+    #   "America/Anchorage",   "America/Menominee", "America/Sitka",
+    #   "America/Denver"
     # ]
 
     # Get a list of countries that are known to use a timezone.
@@ -144,7 +146,8 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
                     result.utcOffset = -prevTransition.utcOffset
 
     proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
-        let transition = tz.transitions[tz.transitions.binarySeach(startUtc, time)]
+        let index = tz.transitions.binarySeach(startUtc, time)
+        let transition = tz.transitions[index]
         result.isDst = transition.isDst
         result.utcOffset = -transition.utcOffset
         result.time = time
@@ -191,7 +194,7 @@ proc location*(db: TzData, tzName: string): Option[Coordinates] =
         result = some(tz.coordinates)
 
 proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
-    ## Shorthand for ``db.location(tz.name)``    
+    ## Shorthand for ``db.location(tz.name)``
     db.location(tz.name)
 
 proc newTimezone(tzName: string, offset: int): Timezone =
@@ -200,7 +203,7 @@ proc newTimezone(tzName: string, offset: int): Timezone =
         result.utcOffset = offset
         result.time = adjTime + initDuration(seconds = offset)
 
-    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.}=
+    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
         result.isDst = false
         result.utcOffset = offset
         result.time = time
@@ -211,13 +214,14 @@ proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
     ## Create a timezone from a timezone name, where the timezone name is one
     ## of the following:
     ## - The string ``"LOCAL"``, representing the systems local timezone.
-    ## - A string of the form ``"±HH:MM:SS"`` or ``"±HH:MM"``, representing a fixed
-    ##   offset from UTC. Note that the sign will be the opposite when compared
-    ##   to ``staticTz``. For example, ``tz"+01:00"`` is the same as
+    ## - A string of the form ``"±HH:MM:SS"`` or ``"±HH:MM"``, representing a
+    #    fixed offset from UTC. Note that the sign will be the opposite when
+    ##   compared to ``staticTz``. For example, ``tz"+01:00"`` is the same as
     ##   ``staticTz(hour = -1)``.
     ## - A timezone name from the
-    ##   `IANA timezone database <https://www.iana.org/time-zones>`_, also listed
-    ##   on `wikipedia <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>`_.
+    ##   `IANA timezone database <https://www.iana.org/time-zones>`_,
+    ##   also listed on
+    ##   `wikipedia <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>`_.
     ##
     ## In case ``tzName`` does not follow any of these formats, or the timezone
     ## name doesn't exist in the database, a ``ValueError`` exception is raised.
@@ -231,7 +235,7 @@ proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
             raise newException(ValueError,
                 "Invalid static timezone offset: " & tzName)
         template parseTwoDigits(str: string, idx: int): int =
-            if str[idx] notin { '0'..'9' } or str[idx + 1] notin { '0'..'9' }:
+            if str[idx] notin {'0'..'9'} or str[idx + 1] notin {'0'..'9'}:
                 echo "err"
                 error()
             (str[idx].ord - '0'.ord) * 10 + (str[idx].ord - '0'.ord)
@@ -281,7 +285,7 @@ when not defined(js):
 when not defined(nimsuggest):
     when not defined(timezonesPath):
         const timezonesPath = "./" & Version & ".json"
-    else:    
+    else:
         const timezonesPath {.strdefine.} = ""
         # isAbsolute isn't available for JS
         when not defined(js):
@@ -289,7 +293,7 @@ when not defined(nimsuggest):
                 {.error: "Path to custom tz data file must be absolute: " &
                     timezonesPath.}
 
-        {.hint: "Embedding custom tz data file: " & timezonesPath .}
+        {.hint: "Embedding custom tz data file: " & timezonesPath.}
 
 when defined(timezonesPath) and defined(timezonesNoEmbeed):
     {.warning: "Both `timezonesPath` and `timezonesNoEmbeed` was passed".}
@@ -310,8 +314,8 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
     proc countries*(tzName: string): seq[Country] =
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
-            doAssert countries"Europe/Stockholm" == @[ "SE" ]
-            doAssert countries"Asia/Bangkok" == @[ "TH", "KH", "LA", "VN" ]
+            doAssert countries"Europe/Stockholm" == @["SE"]
+            doAssert countries"Asia/Bangkok" == @["TH", "KH", "LA", "VN"]
         EmbeededTzData.countries(tzName)
 
     proc countries*(tz: Timezone): seq[Country] =
@@ -329,7 +333,8 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
         ## Convenience proc using the embeeded timezone database.
         runnableExamples:
             import times, options
-            doAssert $(location"Europe/Stockholm") == r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
+            doAssert $(location"Europe/Stockholm") ==
+                    r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
             doAssert (location"Etc/UTC").isNone
             doAssert utc().location.isNone
         EmbeededTzData.location(tzName)
