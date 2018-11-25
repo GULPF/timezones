@@ -58,6 +58,10 @@ test """Static offset with tz"..."""":
     check staticTz(hours = -1, minutes = 1).name == tz("+00:59").name
     expect ValueError, (discard tz"-2")
     expect ValueError, (discard tz"-2:00")
+    expect ValueError, (discard tz"02:00")
+
+    check getTime().inZone(tz"-02:00").utcOffset == 7200
+    check getTime().inZone(tz"+02:00").utcOffset == -7200
 
 # Does not yet work due to overflow/underflows bugs in the JS backend
 # for int64. See #6752.
@@ -72,31 +76,58 @@ when not defined(js):
 test "validation":
     let str = "Invalid string"
     expect ValueError, (discard tz(str))
-    doAssert location(str).isNone
-    doAssert countries(str).len == 0
-    expect ValueError, (discard tz(str))
-    discard tzNames("YX") # Should not raise exception
+    expect ValueError, (discard tzInfo(str))
 
 test "location":
-    check $((location"Europe/Stockholm").get) == "59° 20′ 0″ N 18° 3′ 0″ E"
+    check $((tzInfo"Europe/Stockholm").location.get) == "59° 20′ 0″ N 18° 3′ 0″ E"
 
 test "Etc/UTC":
-    check (location"Etc/UTC").isNone
+    check (tzInfo"Etc/UTC").location.isNone
     check tz"Etc/UTC" == utc()
     let dt = initDateTime(1, mJan, 1970, 00, 00, 00, utc())
     check $dt == $(dt.inZone(tz"Etc/UTC"))
-    check (countries"Etc/UTC").len == 0
+    check (tzInfo"Etc/UTC").countries.len == 0
 
 test "Dynamic tz data loading":
     const jsonContent = staticRead("../" & Version & ".json")
-    let tzdata = parseJsonTimezones(jsonContent)
-    check tzdata.tzNames("SE") == @["Europe/Stockholm"]
-    check tzdata.version == Version
+    let tzdb = parseTzDb(jsonContent)
+    check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
+    check tzdb.version == Version
 
     # We use `timezonesPath` so we don't need to resolve the path ourself
     when defined(timezonesPath) and not defined(js):
         const timezonesPath {.strdefine.} = ""
         block:
-            let tzdata = loadJsonTimezones(timezonesPath)
-            check tzdata.tzNames("SE") == @["Europe/Stockholm"]
-            check tzdata.version == Version
+            let tzdb = loadTzDb(timezonesPath)
+            check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
+            check tzdb.version == Version
+
+when defined(posix):
+    import os
+    import .. / timezones / posixtimezones
+    let zoneInfoPath = getCurrentDir() / "tests/zoneinfo"
+
+    test "load posix tz db with path":
+        let db = loadPosixTzDb(zoneInfoPath)
+        let zone = db.tz"Europe/Stockholm"
+        check zone.name == "Europe/Stockholm"
+
+    putEnv("TZDIR", zoneInfoPath)
+
+    test "load posix tz db with TZDIR":
+        let db = loadPosixTzDb()
+        discard db.tz"Europe/Stockholm"
+
+    test "loadPosixTz":
+        let zone1 = loadPosixTz"Europe/Stockholm"
+        check zone1.name == "Europe/Stockholm"
+        let zone2 = loadPosixTz(zoneInfoPath / "Europe/Stockholm")
+        check zone2.name == zoneInfoPath / "Europe/Stockholm"
+
+    test "loadPosixTzInfo":
+        let zone1 = loadPosixTzInfo"Europe/Stockholm"
+        check zone1.location.isSome
+        check $zone1.location.get == "59° 20′ 0″ N 18° 3′ 0″ E"
+        check zone1.countries == @["SE"]
+        doAssertRaises(AssertionError):
+            discard loadPosixTzInfo(zoneInfoPath / "Europe/Stockholm")

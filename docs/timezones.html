@@ -27,232 +27,113 @@ customize this style sheet.
 Modified from Chad Skeeters' rst2html-style
 https://bitbucket.org/cskeeters/rst2html-style/
 
-Modified by Boyd Greenfield
+Modified by Boyd Greenfield and narimiran
 */
-/* SCSS variables */
-/* Text weights */
-/* Body colors */
-/* Text colors */
-/* Link colors */
-/* Syntax highlighting colors */
-/* Pct changes */
-/* Mixins */
-/* Body/layout */
+
 html {
   font-size: 100%;
   -webkit-text-size-adjust: 100%;
   -ms-text-size-adjust: 100%; }
 
-/* Where we want fancier font if available */
-h1, h2, h3, h4, h5, h6, p.module-desc, table.docinfo + blockquote p, table.docinfo blockquote p, h1 + blockquote p {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif !important; }
-
-h1.title {
-  font-weight: 900; }
-
 body {
   font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
   font-weight: 400;
-  font-size: 16px;
-  line-height: 20px;
-  color: #444;
-  letter-spacing: 0.15px;
-  background-color: #FDFBFA; }
+  font-size: 1.125em;
+  line-height: 1.5;
+  color: #222;
+  background-color: #FCFCFC; }
 
 /* Skeleton grid */
 .container {
   position: relative;
   width: 100%;
-  max-width: 960px;
+  max-width: 1050px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0;
   box-sizing: border-box; }
 
 .column,
 .columns {
   width: 100%;
   float: left;
-  box-sizing: border-box; }
+  box-sizing: border-box;
+  margin-left: 1%;
+}
 
-/* For devices larger than 400px */
-@media (min-width: 400px) {
-  .container {
-    width: 100%;
-    padding: 0; } }
-/* For devices larger than 650px */
-@media (min-width: 650px) {
-  .container {
-    width: 100%; }
+.column:first-child,
+.columns:first-child {
+  margin-left: 0; }
 
-  .column,
-  .columns {
-    margin-left: 4%; }
+.three.columns {
+  width: 19%; }
 
-  .column:first-child,
-  .columns:first-child {
-    margin-left: 0; }
+.nine.columns {
+  width: 80.0%; }
 
-  .one.column,
-  .one.columns {
-    width: 4.66666666667%; }
+.twelve.columns {
+  width: 100%;
+  margin-left: 0; }
 
-  .two.columns {
-    width: 13.3333333333%; }
-
+@media screen and (max-width: 860px) {
   .three.columns {
-    width: 22%; }
-
-  .four.columns {
-    width: 30.6666666667%; }
-
-  .five.columns {
-    width: 39.3333333333%; }
-
-  .six.columns {
-    width: 48%; }
-
-  .seven.columns {
-    width: 56.6666666667%; }
-
-  .eight.columns {
-    width: 65.3333333333%; }
-
+    display: none;
+  }
   .nine.columns {
-    width: 74.0%; }
-
-  .ten.columns {
-    width: 82.6666666667%; }
-
-  .eleven.columns {
-    width: 91.3333333333%; }
-
-  .twelve.columns {
-    width: 100%;
-    margin-left: 0; }
-
-  .one-third.column {
-    width: 30.6666666667%; }
-
-  .two-thirds.column {
-    width: 65.3333333333%; } }
-/* Customer Overrides */
-.footer {
-  text-align: center;
-  color: #969696;
-  padding-top: 10%; }
-
-p.module-desc {
-  font-size: 1.1em;
-  color: #666666; }
-
-a.link-seesrc {
-  color: #aec7d2;
-  font-style: italic; }
-
-a.link-seesrc:hover {
-  color: #6c9aae; }
-
-#toc-list {
-  word-wrap: break-word; }
-
-ul.simple-toc {
-  list-style: none; }
-
-ul.simple-toc a.reference-toplevel {
-  font-weight: bold;
-  color: #0077b3; }
-
-ul.simple-toc-section {
-  list-style-type: circle;
-  color: #6c9aae; }
-
-ul.simple-toc-section a.reference {
-  color: #0077b3; }
+    width: 98.0%;
+  }
+  body {
+    font-size: 1em;
+    line-height: 1.35;
+  }
+}
 
 cite {
   font-style: italic !important; }
 
-dt > pre {
-  border-color: rgba(0, 0, 0, 0.1);
-  background-color: rgba(255, 255, 255, 0.3);
-  margin: 15px 0px 5px; }
-
-dd > pre {
-  border-color: rgba(0, 0, 0, 0.1);
-  background-color: whitesmoke;
-  margin-top: 8px; }
-
-.item > dd {
-  margin-left: 10px;
-  margin-bottom: 30px; }
-
-/* Nim line-numbered tables */
-.line-nums-table {
-  width: 100%;
-  table-layout: fixed; }
 
 /* Nim search input */
 div#searchInputDiv {
-  margin-bottom: 8px;
+  margin-bottom: 1em;
 }
-div#searchInputDiv input#searchInput {
-  width: 10em;
-}
-div.search-groupby {
-  margin-bottom: 8px;
+input#searchInput {
+  width: 80%;
 }
 
-table.line-nums-table {
-  border-radius: 4px;
-  border: 1px solid #cccccc;
-  background-color: whitesmoke;
-  border-collapse: separate;
-  margin-top: 15px;
-  margin-bottom: 25px; }
-
-.line-nums-table tbody {
-  border: none; }
-
-.line-nums-table td pre {
-  border: none;
-  background-color: transparent; }
-
-.line-nums-table td.blob-line-nums {
-  width: 28px; }
-
-.line-nums-table td.blob-line-nums pre {
-  color: #b0b0b0;
-  -webkit-filter: opacity(75%);
-  text-align: right;
-  border-color: transparent;
-  background-color: transparent;
-  padding-left: 0px;
-  margin-left: 0px;
-  padding-right: 0px;
-  margin-right: 0px; }
 
 /* Docgen styles */
 /* Links */
 a {
-  color: #0077b3;
-  text-decoration: none; }
+  color: #07b;
+  text-decoration: none;
+}
+
+a span.Identifier {
+  text-decoration: underline;
+  text-decoration-color: #aab;
+}
+
+a.reference-toplevel {
+  font-weight: bold;
+}
+
+a.toc-backref {
+  text-decoration: none;
+  color: #222; }
+
+a.link-seesrc {
+  color: #607c9f;
+  font-size: 0.9em;
+  font-style: italic; }
 
 a:hover,
 a:focus {
-  color: #00334d;
+  color: #607c9f;
   text-decoration: underline; }
 
-a:visited {
-  color: #00334d; }
+a:hover span.Identifier {
+  color: #607c9f;
+}
 
-a:focus {
-  outline: thin dotted #2d2d2d;
-  outline: 5px auto -webkit-focus-ring-color;
-  outline-offset: -2px; }
-
-a:hover,
-a:active {
-  outline: 0; }
 
 sub,
 sup {
@@ -329,379 +210,258 @@ img {
 
   h2,
   h3 {
-    page-break-after: avoid; } }
-.img-rounded {
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px; }
+    page-break-after: avoid; }
+}
 
-.img-polaroid {
-  padding: 4px;
-  background-color: rgba(252, 248, 244, 0.75);
-  border: 1px solid #ccc;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 
 p {
-  margin: 0 0 8px; }
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
 
 small {
   font-size: 85%; }
 
 strong {
-  font-weight: 600; }
+  font-weight: 600;
+  font-size: 0.95em;
+  color: #3c3c3c;
+}
 
 em {
   font-style: italic; }
 
-cite {
-  font-style: normal; }
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
-  font-weight: 600;
-  line-height: 20px;
-  color: inherit;
-  text-rendering: optimizelegibility; }
-
 h1 {
-  font-size: 2em;
+  font-size: 1.8em;
   font-weight: 400;
-  padding-bottom: .15em;
-  border-bottom: 1px solid #aaaaaa;
-  margin-top: 1.0em;
+  padding-bottom: .25em;
+  border-bottom: 1px solid #aaa;
+  margin-top: 2.5em;
+  margin-bottom: 1em;
   line-height: 1.2em; }
 
 h1.title {
   padding-bottom: 1em;
   border-bottom: 0px;
-  font-size: 2.75em; }
+  font-size: 2.5em;
+  text-align: center;
+  font-weight: 900;
+  margin-top: 0.75em;
+  margin-bottom: 0em;
+}
 
 h2 {
-  font-size: 1.5em;
-  margin-top: 1.5em; }
+  font-size: 1.3em;
+  margin-top: 2em; }
+
+h2.subtitle {
+  text-align: center; }
 
 h3 {
-  font-size: 1.3em;
+  font-size: 1.125em;
   font-style: italic;
-  margin-top: 0.75em; }
+  margin-top: 1.5em; }
 
 h4 {
-  font-size: 1.3em;
-  margin-top: 0.5em; }
+  font-size: 1.125em;
+  margin-top: 1em; }
 
 h5 {
-  font-size: 1.2em;
-  margin-top: 0.25em; }
+  font-size: 1.125em;
+  margin-top: 0.75em; }
 
 h6 {
   font-size: 1.1em; }
 
+
 ul,
 ol {
   padding: 0;
-  margin: 0 0 0px 15px; }
+  margin-top: 0.5em;
+  margin-left: 0.75em; }
 
 ul ul,
 ul ol,
 ol ol,
 ol ul {
-  margin-bottom: 0; }
+  margin-bottom: 0;
+  margin-left: 1.25em; }
 
 li {
-  line-height: 20px; }
-
-dl {
-  margin-bottom: 20px; }
-
-dt,
-dd {
-  line-height: 20px; }
-
-dt {
-  font-weight: bold; }
-
-dd {
-  margin-left: 10px;
-  margin-bottom: 26px; }
-
-hr {
-  margin: 20px 0;
-  border: 0;
-  border-top: 1px solid #eeeeee;
-  border-bottom: 1px solid #ffffff; }
-
-abbr[title],
-abbr[data-original-title] {
-  cursor: help;
-  border-bottom: 1px dotted #999999; }
-
-abbr.initialism {
-  font-size: 90%;
-  text-transform: uppercase; }
-
-blockquote {
-  padding: 0 0 0 15px;
-  margin: 0 0 20px;
-  border-left: 5px solid #EFEBE0; }
-
-table.docinfo + blockquote, table.docinfo blockquote, h1 + blockquote {
-  border-left: 5px solid #c9c9c9;
+    list-style-type: circle;
 }
 
-table.docinfo + blockquote p, table.docinfo blockquote p, h1 + blockquote p {
-  margin-bottom: 0;
-  font-size: 15px;
-  font-weight: 200;
-  line-height: 1.5;
-  font-style: italic; }
+ul.simple-boot li {
+    list-style-type: none;
+    margin-left: 0em;
+    margin-bottom: 0.5em;
+}
 
-q:before,
-q:after,
-blockquote:before,
-blockquote:after {
-  content: ""; }
+ol.simple > li, ul.simple > li {
+  margin-bottom: 0.25em;
+  margin-left: 0.4em }
 
-address {
-  display: block;
-  margin-bottom: 20px;
-  font-style: normal;
-  line-height: 20px; }
+ul.simple.simple-toc > li {
+    margin-top: 1em;
+}
 
-code,
-pre {
-  font-family: "Source Code Pro", Monaco, Menlo, Consolas, "Courier New", monospace;
-  padding: 0 3px 2px;
-  font-weight: 500;
-  font-size: 12px;
-  color: #444444;
-  -webkit-border-radius: 3px;
-  -moz-border-radius: 3px;
-  border-radius: 3px; }
+ul.simple-toc {
+  list-style: none;
+  font-size: 0.9em;
+  margin-left: -0.3em;
+  margin-top: 1em; }
+
+ul.simple-toc > li {
+    list-style-type: none;
+}
+
+ul.simple-toc-section {
+  list-style-type: circle;
+  margin-left: 1em;
+  color: #6c9aae; }
+
+
+ol.arabic {
+  list-style: decimal; }
+
+ol.loweralpha {
+  list-style: lower-alpha; }
+
+ol.upperalpha {
+  list-style: upper-alpha; }
+
+ol.lowerroman {
+  list-style: lower-roman; }
+
+ol.upperroman {
+  list-style: upper-roman; }
+
+ul.auto-toc {
+  list-style-type: none; }
+
+
+dl {
+  margin-bottom: 1.5em; }
+
+dt {
+  margin-bottom: -0.5em;
+  margin-left: 0.5em; }
+
+dd {
+  margin-left: 0.5em;
+  margin-bottom: 2.5em;
+  margin-top: 0.5em; }
+
+
+hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid #aaa; }
+
+blockquote {
+  font-size: 0.9em;
+  font-style: italic;
+  padding-left: 0.5em;
+  margin-left: 0;
+  border-left: 5px solid #bbc;
+}
 
 .pre {
   font-family: "Source Code Pro", Monaco, Menlo, Consolas, "Courier New", monospace;
-  font-weight: 600;
-  /*color: #504da6;*/
+  font-weight: 500;
+  font-size: 0.85em;
+  background-color: #f0f3ff;
+  padding-left: 3px;
+  padding-right: 3px;
+  border-radius: 4px;
 }
 
-code {
-  padding: 2px 4px;
-  color: #444444;
-  white-space: nowrap;
-  background-color: white;
-  border: 1px solid #777777; }
-
 pre {
+  font-family: "Source Code Pro", Monaco, Menlo, Consolas, "Courier New", monospace;
+  color: #222;
+  font-weight: 500;
   display: inline-block;
   box-sizing: border-box;
-  min-width: calc(100% - 19.5px);
-  padding: 9.5px;
-  margin: 0.25em 10px 10px 10px;
-  font-size: 15px;
-  line-height: 20px;
+  min-width: 100%;
+  padding: 0.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-size: 0.85em;
   white-space: pre !important;
   overflow-y: hidden;
   overflow-x: visible;
-  background-color: rgba(0, 0, 0, 0.01);
-  border: 1px solid #cccccc;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px; }
-
-pre.prettyprint {
-  margin-bottom: 20px; }
-
-pre code {
-  padding: 0;
-  color: inherit;
-  white-space: pre;
-  overflow-x: visible;
-  background-color: transparent;
-  border: 0; }
+  background-color: ghostwhite;
+  border: 1px solid #dde;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px; }
 
 .pre-scrollable {
   max-height: 340px;
   overflow-y: scroll; }
 
+
+/* Nim line-numbered tables */
+.line-nums-table {
+  width: 100%;
+  table-layout: fixed; }
+
+table.line-nums-table {
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+  background-color: ghostwhite;
+  border-collapse: separate;
+  margin-top: 15px;
+  margin-bottom: 25px; }
+
+.line-nums-table tbody {
+  border: none; }
+
+.line-nums-table td pre {
+  border: none;
+  background-color: transparent; }
+
+.line-nums-table td.blob-line-nums {
+  width: 28px; }
+
+.line-nums-table td.blob-line-nums pre {
+  color: #b0b0b0;
+  -webkit-filter: opacity(75%);
+  text-align: right;
+  border-color: transparent;
+  background-color: transparent;
+  padding-left: 0px;
+  margin-left: 0px;
+  padding-right: 0px;
+  margin-right: 0px; }
+
+
 table {
   max-width: 100%;
   background-color: transparent;
+  margin-top: 0.5em;
+  margin-bottom: 1.5em;
   border-collapse: collapse;
-  border-spacing: 0; }
-
-table th, table td {
-  padding: 0px 8px 0px;
+  border-color: #ccc;
+  border-spacing: 0;
+  font-size: 0.9em;
 }
 
-.table {
-  width: 100%;
-  margin-bottom: 20px; }
+table th, table td {
+  padding: 0px 0.5em 0px;
+}
 
-.table th,
-.table td {
-  padding: 8px;
-  line-height: 20px;
-  text-align: left;
-  vertical-align: top;
-  border-top: 1px solid #444444; }
-
-.table th {
+table th {
+  background-color: #e8e8e8;
   font-weight: bold; }
 
-.table thead th {
-  vertical-align: bottom; }
+table th.docinfo-name {
+    background-color: transparent;
+}
 
-.table caption + thead tr:first-child th,
-.table caption + thead tr:first-child td,
-.table colgroup + thead tr:first-child th,
-.table colgroup + thead tr:first-child td,
-.table thead:first-child tr:first-child th,
-.table thead:first-child tr:first-child td {
-  border-top: 0; }
+table tr:hover {
+  background-color: ghostwhite; }
 
-.table tbody + tbody {
-  border-top: 2px solid #444444; }
-
-.table .table {
-  background-color: rgba(252, 248, 244, 0.75); }
-
-.table-condensed th,
-.table-condensed td {
-  padding: 4px 5px; }
-
-.table-bordered {
-  border: 1px solid #444444;
-  border-collapse: separate;
-  *border-collapse: collapse;
-  border-left: 0;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px; }
-
-.table-bordered th,
-.table-bordered td {
-  border-left: 1px solid #444444; }
-
-.table-bordered caption + thead tr:first-child th,
-.table-bordered caption + tbody tr:first-child th,
-.table-bordered caption + tbody tr:first-child td,
-.table-bordered colgroup + thead tr:first-child th,
-.table-bordered colgroup + tbody tr:first-child th,
-.table-bordered colgroup + tbody tr:first-child td,
-.table-bordered thead:first-child tr:first-child th,
-.table-bordered tbody:first-child tr:first-child th,
-.table-bordered tbody:first-child tr:first-child td {
-  border-top: 0; }
-
-.table-bordered thead:first-child tr:first-child > th:first-child,
-.table-bordered tbody:first-child tr:first-child > td:first-child,
-.table-bordered tbody:first-child tr:first-child > th:first-child {
-  -webkit-border-top-left-radius: 4px;
-  border-top-left-radius: 4px;
-  -moz-border-radius-topleft: 4px; }
-
-.table-bordered thead:first-child tr:first-child > th:last-child,
-.table-bordered tbody:first-child tr:first-child > td:last-child,
-.table-bordered tbody:first-child tr:first-child > th:last-child {
-  -webkit-border-top-right-radius: 4px;
-  border-top-right-radius: 4px;
-  -moz-border-radius-topright: 4px; }
-
-.table-bordered thead:last-child tr:last-child > th:first-child,
-.table-bordered tbody:last-child tr:last-child > td:first-child,
-.table-bordered tbody:last-child tr:last-child > th:first-child,
-.table-bordered tfoot:last-child tr:last-child > td:first-child,
-.table-bordered tfoot:last-child tr:last-child > th:first-child {
-  -webkit-border-bottom-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  -moz-border-radius-bottomleft: 4px; }
-
-.table-bordered thead:last-child tr:last-child > th:last-child,
-.table-bordered tbody:last-child tr:last-child > td:last-child,
-.table-bordered tbody:last-child tr:last-child > th:last-child,
-.table-bordered tfoot:last-child tr:last-child > td:last-child,
-.table-bordered tfoot:last-child tr:last-child > th:last-child {
-  -webkit-border-bottom-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  -moz-border-radius-bottomright: 4px; }
-
-.table-bordered tfoot + tbody:last-child tr:last-child td:first-child {
-  -webkit-border-bottom-left-radius: 0;
-  border-bottom-left-radius: 0;
-  -moz-border-radius-bottomleft: 0; }
-
-.table-bordered tfoot + tbody:last-child tr:last-child td:last-child {
-  -webkit-border-bottom-right-radius: 0;
-  border-bottom-right-radius: 0;
-  -moz-border-radius-bottomright: 0; }
-
-.table-bordered caption + thead tr:first-child th:first-child,
-.table-bordered caption + tbody tr:first-child td:first-child,
-.table-bordered colgroup + thead tr:first-child th:first-child,
-.table-bordered colgroup + tbody tr:first-child td:first-child {
-  -webkit-border-top-left-radius: 4px;
-  border-top-left-radius: 4px;
-  -moz-border-radius-topleft: 4px; }
-
-.table-bordered caption + thead tr:first-child th:last-child,
-.table-bordered caption + tbody tr:first-child td:last-child,
-.table-bordered colgroup + thead tr:first-child th:last-child,
-.table-bordered colgroup + tbody tr:first-child td:last-child {
-  -webkit-border-top-right-radius: 4px;
-  border-top-right-radius: 4px;
-  -moz-border-radius-topright: 4px; }
-
-table.docutils th {
-  background-color: #e8e8e8; }
-
-table.docutils tr:hover {
-  background-color: whitesmoke; }
-
-.table-striped tbody > tr:nth-child(odd) > td,
-.table-striped tbody > tr:nth-child(odd) > th {
-  background-color: rgba(252, 248, 244, 0.75); }
-
-.table-hover tbody tr:hover > td,
-.table-hover tbody tr:hover > th {
-  background-color: rgba(241, 222, 204, 0.75); }
-
-table td[class*="span"],
-table th[class*="span"],
-.row-fluid table td[class*="span"],
-.row-fluid table th[class*="span"] {
-  display: table-cell;
-  float: none;
-  margin-left: 0; }
-
-.hero-unit {
-  padding: 60px;
-  margin-bottom: 30px;
-  font-size: 18px;
-  font-weight: 200;
-  line-height: 30px;
-  color: inherit;
-  background-color: rgba(230, 197, 164, 0.75);
-  -webkit-border-radius: 6px;
-  -moz-border-radius: 6px;
-  border-radius: 6px; }
-
-.hero-unit h1 {
-  margin-bottom: 0;
-  font-size: 60px;
-  line-height: 1;
-  letter-spacing: -1px;
-  color: inherit; }
-
-.hero-unit li {
-  line-height: 30px; }
 
 /* rst2html default used to remove borders from tables and images */
 .borderless, table.borderless td, table.borderless th {
@@ -722,10 +482,6 @@ table.borderless td, table.borderless th {
 .hidden {
   display: none; }
 
-a.toc-backref {
-  text-decoration: none;
-  color: #444444; }
-
 blockquote.epigraph {
   margin: 2em 5em; }
 
@@ -735,85 +491,6 @@ dl.docutils dd {
 object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
   overflow: hidden; }
 
-/* Uncomment (and remove this text!) to get bold-faced definition list terms
-dl.docutils dt {
-  font-weight: bold }
-*/
-div.abstract {
-  margin: 2em 5em; }
-
-div.abstract p.topic-title {
-  font-weight: bold;
-  text-align: center; }
-
-div.admonition, div.attention, div.caution, div.danger, div.error,
-div.hint, div.important, div.note, div.tip, div.warning {
-  margin: 2em;
-  border: medium outset;
-  padding: 1em; }
-
-div.note, div.warning {
-  margin: 1.5em 0px;
-  border: none; }
-
-div.note p.admonition-title,
-div.warning p.admonition-title {
-  display: none; }
-
-/* Clearfix
- * http://css-tricks.com/snippets/css/clear-fix/
- */
-div.note:after,
-div.warning:after {
-  content: "";
-  display: table;
-  clear: both; }
-
-div.note p:before,
-div.warning p:before {
-  display: block;
-  float: left;
-  font-size: 4em;
-  line-height: 1em;
-  margin-right: 20px;
-  margin-left: 0em;
-  margin-top: -10px;
-  content: '\0270D';
-  /*handwriting*/ }
-
-div.warning p:before {
-  content: '\026A0';
-  /*warning*/ }
-
-div.admonition p.admonition-title, div.hint p.admonition-title,
-div.important p.admonition-title, div.note p.admonition-title,
-div.tip p.admonition-title {
-  font-weight: bold;
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif; }
-
-div.attention p.admonition-title, div.caution p.admonition-title,
-div.danger p.admonition-title, div.error p.admonition-title,
-div.warning p.admonition-title, .code .error {
-  color: #b30000;
-  font-weight: bold;
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif; }
-
-/* Uncomment (and remove this text!) to get reduced vertical space in
-   compound paragraphs.
-div.compound .compound-first, div.compound .compound-middle {
-  margin-bottom: 0.5em }
-
-div.compound .compound-last, div.compound .compound-middle {
-  margin-top: 0.5em }
-*/
-div.dedication {
-  margin: 2em 5em;
-  text-align: center;
-  font-style: italic; }
-
-div.dedication p.topic-title {
-  font-weight: bold;
-  font-style: normal; }
 
 div.figure {
   margin-left: 2em;
@@ -821,7 +498,13 @@ div.figure {
 
 div.footer, div.header {
   clear: both;
+  text-align: center;
+  color: #666;
   font-size: smaller; }
+
+div.footer {
+    padding-top: 5em;
+}
 
 div.line-block {
   display: block;
@@ -833,45 +516,24 @@ div.line-block div.line-block {
   margin-bottom: 0;
   margin-left: 1.5em; }
 
-div.sidebar {
-  margin: 0 0 0.5em 1em;
-  border: medium outset;
-  padding: 1em;
-  background-color: rgba(252, 248, 244, 0.75);
-  width: 40%;
-  float: right;
-  clear: right; }
-
-div.sidebar p.rubric {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
-  font-size: medium; }
-
-div.system-messages {
-  margin: 5em; }
-
-div.system-messages h1 {
-  color: #b30000; }
-
-div.system-message {
-  border: medium outset;
-  padding: 1em; }
-
-div.system-message p.system-message-title {
-  color: #b30000;
-  font-weight: bold; }
-
 div.topic {
   margin: 2em; }
 
-h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
-h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
-  margin-top: 0.4em; }
+div.search_results {
+  background-color: antiquewhite;
+  margin: 3em;
+  padding: 1em;
+  border: 1px solid #4d4d4d;
+}
 
-h1.title {
-  text-align: center; }
+div#global-links ul {
+  margin-left: 0;
+  list-style-type: none;
+}
 
-h2.subtitle {
-  text-align: center; }
+div#global-links > simple-boot {
+    margin-left: 3em;
+}
 
 hr.docutils {
   width: 75%; }
@@ -905,30 +567,6 @@ img.align-center, .figure.align-center, object.align-center {
 div.align-right {
   text-align: inherit; }
 
-/* div.align-center * { */
-/*   text-align: left } */
-
-ul.simple > li {
-  margin-bottom: 0.5em }
-
-ol.simple, ul.simple {
-  margin-bottom: 1em; }
-
-ol.arabic {
-  list-style: decimal; }
-
-ol.loweralpha {
-  list-style: lower-alpha; }
-
-ol.upperalpha {
-  list-style: upper-alpha; }
-
-ol.lowerroman {
-  list-style: lower-roman; }
-
-ol.upperroman {
-  list-style: upper-roman; }
-
 p.attribution {
   text-align: right;
   margin-left: 50%; }
@@ -948,15 +586,6 @@ p.rubric {
   font-size: larger;
   color: maroon;
   text-align: center; }
-
-p.sidebar-title {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
-  font-weight: bold;
-  font-size: larger; }
-
-p.sidebar-subtitle {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
-  font-weight: bold; }
 
 p.topic-title {
   font-weight: bold; }
@@ -997,21 +626,13 @@ pre.code .inserted, code .inserted {
   background-color: #A3D289; }
 
 span.classifier {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
   font-style: oblique; }
 
 span.classifier-delimiter {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
   font-weight: bold; }
-
-span.interpreted {
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif; }
 
 span.option {
   white-space: nowrap; }
-
-span.pre {
-  white-space: pre; }
 
 span.problematic {
   color: #b30000; }
@@ -1019,44 +640,6 @@ span.problematic {
 span.section-subtitle {
   /* font-size relative to parent (h1..h6 element) */
   font-size: 80%; }
-
-table.citation {
-  border-left: solid 1px #666666;
-  margin-left: 1px; }
-
-table.docinfo {
-  margin: 0em;
-  margin-top: 2em;
-  margin-bottom: 2em;
-  font-family: "Lato", "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif !important;
-  color: #444444; }
-
-table.docutils {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em; }
-
-table.footnote {
-  border-left: solid 1px #2d2d2d;
-  margin-left: 1px; }
-
-table.docutils td, table.docutils th,
-table.docinfo td, table.docinfo th {
-  padding-left: 0.5em;
-  padding-right: 0.5em;
-  vertical-align: top; }
-
-table.docutils th.field-name, table.docinfo th.docinfo-name {
-  font-weight: 700;
-  text-align: left;
-  white-space: nowrap;
-  padding-left: 0; }
-
-h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
-h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
-  font-size: 100%; }
-
-ul.auto-toc {
-  list-style-type: none; }
 
 span.DecNumber {
   color: #252dbe; }
@@ -1074,7 +657,7 @@ span.FloatNumber {
   color: #252dbe; }
 
 span.Identifier {
-  color: #3b3b3b; }
+  color: #222; }
 
 span.Keyword {
   font-weight: 600;
@@ -1139,37 +722,22 @@ dt pre > span.Identifier, dt pre > span.Operator {
   color: #155da4;
   font-weight: 700; }
 
-dt pre > span.Identifier ~ span.Identifier, dt pre > span.Operator ~ span.Identifier {
-  color: inherit;
-  font-weight: inherit; }
-
-dt pre > span.Operator ~ span.Identifier {
+dt pre > span.Keyword ~ span.Identifier, dt pre > span.Identifier ~ span.Identifier,
+dt pre > span.Operator ~ span.Identifier, dt pre > span.Other ~ span.Identifier {
   color: inherit;
   font-weight: inherit; }
 
 /* Nim sprite for the footer (taken from main page favicon) */
 .nim-sprite {
   display: inline-block;
-  height: 12px;
-  width: 12px;
+  height: 16px;
+  width: 16px;
   background-position: 0 0;
-  background-size: 12px 12px;
+  background-size: 16px 16px;
   -webkit-filter: opacity(50%);
   background-repeat: no-repeat;
   background-image: url("data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AAAAAAUAAAAF////AP///wD///8A////AP///wD///8A////AP///wD///8A////AAAAAAIAAABbAAAAlQAAAKIAAACbAAAAmwAAAKIAAACVAAAAWwAAAAL///8A////AP///wD///8A////AAAAABQAAADAAAAAYwAAAA3///8A////AP///wD///8AAAAADQAAAGMAAADAAAAAFP///wD///8A////AP///wAAAACdAAAAOv///wD///8A////AP///wD///8A////AP///wD///8AAAAAOgAAAJ3///8A////AP///wAAAAAnAAAAcP///wAAAAAoAAAASv///wD///8A////AP///wAAAABKAAAAKP///wAAAABwAAAAJ////wD///8AAAAAgQAAABwAAACIAAAAkAAAAJMAAACtAAAAFQAAABUAAACtAAAAkwAAAJAAAACIAAAAHAAAAIH///8A////AAAAAKQAAACrAAAAaP///wD///8AAAAARQAAANIAAADSAAAARf///wD///8AAAAAaAAAAKsAAACk////AAAAADMAAACcAAAAnQAAABj///8A////AP///wAAAAAYAAAAGP///wD///8A////AAAAABgAAACdAAAAnAAAADMAAAB1AAAAwwAAAP8AAADpAAAAsQAAAE4AAAAb////AP///wAAAAAbAAAATgAAALEAAADpAAAA/wAAAMMAAAB1AAAAtwAAAOkAAAD/AAAA/wAAAP8AAADvAAAA3gAAAN4AAADeAAAA3gAAAO8AAAD/AAAA/wAAAP8AAADpAAAAtwAAAGUAAAA/AAAA3wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAAD/AAAA/wAAAP8AAADfAAAAPwAAAGX///8A////AAAAAEgAAADtAAAAvwAAAL0AAADGAAAA7wAAAO8AAADGAAAAvQAAAL8AAADtAAAASP///wD///8A////AP///wD///8AAAAAO////wD///8A////AAAAAIcAAACH////AP///wD///8AAAAAO////wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A//8AAP//AAD4HwAA7/cAAN/7AAD//wAAoYUAAJ55AACf+QAAh+EAAAAAAADAAwAA4AcAAP5/AAD//wAA//8AAA==");
   margin-bottom: -5px; }
-
-div.search_results {
-  background-color: antiquewhite;
-  margin: 3em;
-  padding: 1em;
-  border: 1px solid #4d4d4d;
-}
-
-div#global-links ul {
-  margin-left: 0;
-  list-style-type: none;
-}
 
 span.pragmadots {
   /* Position: relative frees us up to make the dots
@@ -1178,18 +746,14 @@ span.pragmadots {
   position: relative;
   /* 1px down looks slightly nicer */
   top: 1px;
-
   padding: 2px;
-  background-color: #D3D3D3;
+  background-color: #e8e8e8;
   border-radius: 4px;
   margin: 0 2px;
   cursor: pointer;
-
-  /* For some reason on Chrome, making the font size
-  smaller than 1em is causing the parent container to
-  bulge slightly. So, we're stuck with inheriting 1em,
-  which is sad, because 0.8em looks better... */
+  font-size: 0.8em;
 }
+
 span.pragmadots:hover {
   background-color: #DBDBDB;
 }
@@ -1249,8 +813,22 @@ function main() {
   <ul class="simple simple-toc-section">
       <li><a class="reference" href="#Country"
     title="Country = string"><wbr />Country<span class="attachedType" style="visibility:hidden"></span></a></li>
-  <li><a class="reference" href="#TzData"
-    title="TzData = TzDataImpl"><wbr />Tz<wbr />Data<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#TimezoneDb"
+    title="TimezoneDb = TimezoneDbImpl"><wbr />Timezone<wbr />Db<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#TimezoneInfo"
+    title="TimezoneInfo = object
+  timezone*: Timezone          ## \
+                    ## The timezone as a ``times.Timezone`` object.
+  countries*: seq[Country]     ## \
+                         ## Get a list of countries that are
+                         ## known to use this timezone.
+                         ## Note that some countries use
+                         ## multiple timezones.
+  location*: Option[Coordinates] ## \
+                               ## Get the coordinates of a timezone. This is generally the
+                               ## coordinates of the city in the timezone name.
+                               ## E.g ``db.location&quot;Europe&#x2F;Stockholm&quot;`` will give the the
+                               ## coordinates of Stockholm, the capital of Sweden."><wbr />Timezone<wbr />Info<span class="attachedType" style="visibility:hidden"></span></a></li>
   <li><a class="reference" href="#Dms"
     title="Dms = object
   deg*, min*, sec*: int16"><wbr />Dms<span class="attachedType" style="visibility:hidden"></span></a></li>
@@ -1261,50 +839,32 @@ function main() {
   </ul>
 </li>
 <li>
-  <a class="reference reference-toplevel" href="#9" id="59">Lets</a>
-  <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#EmbeededTzData"
-    title="EmbeededTzData = embeededTzDataImpl"><wbr />Embeeded<wbr />Tz<wbr />Data<span class="attachedType" style="visibility:hidden"></span></a></li>
-
-  </ul>
-</li>
-<li>
   <a class="reference reference-toplevel" href="#12" id="62">Procs</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#version%2CTzDataImpl"
-    title="version(db: TzData): string"><wbr />version<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#countries%2CTzDataImpl%2Cstring"
-    title="countries(db: TzData; tzName: string): seq[Country]"><wbr />countries<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#countries%2CTzDataImpl%2CTimezone"
-    title="countries(db: TzData; tz: Timezone): seq[Country]"><wbr />countries<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#tzNames%2CTzDataImpl%2CCountry"
-    title="tzNames(db: TzData; country: Country): seq[string]"><wbr />tz<wbr />Names<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#location%2CTzDataImpl%2Cstring"
-    title="location(db: TzData; tzName: string): Option[Coordinates]"><wbr />location<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#location%2CTzDataImpl%2CTimezone"
-    title="location(db: TzData; tz: Timezone): Option[Coordinates]"><wbr />location<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#tz%2CTzDataImpl%2Cstring"
-    title="tz(db: TzData; tzName: string): Timezone"><wbr />tz<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#parseJsonTimezones%2Cstring"
-    title="parseJsonTimezones(content: string): TzData"><wbr />parse<wbr />Json<wbr />Timezones<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#parseJsonTimezones%2CStream"
-    title="parseJsonTimezones(s: Stream): TzData"><wbr />parse<wbr />Json<wbr />Timezones<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#loadJsonTimezones%2Cstring"
-    title="loadJsonTimezones(path: string): TzData"><wbr />load<wbr />Json<wbr />Timezones<span class="attachedType" style="visibility:hidden">TzData</span></a></li>
-  <li><a class="reference" href="#countries%2Cstring"
-    title="countries(tzName: string): seq[Country]"><wbr />countries<span class="attachedType" style="visibility:hidden">Country</span></a></li>
-  <li><a class="reference" href="#countries%2CTimezone"
-    title="countries(tz: Timezone): seq[Country]"><wbr />countries<span class="attachedType" style="visibility:hidden">Country</span></a></li>
-  <li><a class="reference" href="#tzNames%2CCountry"
-    title="tzNames(country: Country): seq[string]"><wbr />tz<wbr />Names<span class="attachedType" style="visibility:hidden">Country</span></a></li>
-  <li><a class="reference" href="#location%2Cstring"
-    title="location(tzName: string): Option[Coordinates]"><wbr />location<span class="attachedType" style="visibility:hidden"></span></a></li>
-  <li><a class="reference" href="#location%2CTimezone"
-    title="location(tz: Timezone): Option[Coordinates]"><wbr />location<span class="attachedType" style="visibility:hidden"></span></a></li>
+      <li><a class="reference" href="#tz%2CTimezoneDbImpl%2Cstring"
+    title="tz(db: TimezoneDb; tzName: string): Timezone"><wbr />tz<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
   <li><a class="reference" href="#tz%2Cstring"
     title="tz(tzName: string): Timezone"><wbr />tz<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#tzInfo%2CTimezoneDbImpl%2Cstring"
+    title="tzInfo(db: TimezoneDb; tzName: string): TimezoneInfo"><wbr />tz<wbr />Info<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#tzInfo%2Cstring"
+    title="tzInfo(tzName: string): TimezoneInfo"><wbr />tz<wbr />Info<span class="attachedType" style="visibility:hidden">TimezoneInfo</span></a></li>
+  <li><a class="reference" href="#setDefaultTzDb%2CTimezoneDbImpl"
+    title="setDefaultTzDb(db: TimezoneDb)"><wbr />set<wbr />Default<wbr />Tz<wbr />Db<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#getDefaultTzDb"
+    title="getDefaultTzDb(): TimezoneDb"><wbr />get<wbr />Default<wbr />Tz<wbr />Db<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
   <li><a class="reference" href="#staticTz%2Cint%2Cint%2Cint"
     title="staticTz(hours, minutes, seconds: int = 0): Timezone"><wbr />static<wbr />Tz<span class="attachedType" style="visibility:hidden"></span></a></li>
+  <li><a class="reference" href="#parseTzDb%2Cstring"
+    title="parseTzDb(content: string): TimezoneDb"><wbr />parse<wbr />Tz<wbr />Db<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#parseTzDb%2CStream"
+    title="parseTzDb(s: Stream): TimezoneDb"><wbr />parse<wbr />Tz<wbr />Db<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#loadTzDb%2Cstring"
+    title="loadTzDb(path: string): TimezoneDb"><wbr />load<wbr />Tz<wbr />Db<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#version%2CTimezoneDbImpl"
+    title="version(db: TimezoneDb): string"><wbr />version<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
+  <li><a class="reference" href="#tzNames%2CTimezoneDbImpl"
+    title="tzNames(db: TimezoneDb): seq[string]"><wbr />tz<wbr />Names<span class="attachedType" style="visibility:hidden">TimezoneDb</span></a></li>
   <li><a class="reference" href="#initCoordinates%2C%2C"
     title="initCoordinates(lat, lon: (int16, int16, int16)): Coordinates"><wbr />init<wbr />Coordinates<span class="attachedType" style="visibility:hidden">Coordinates</span></a></li>
   <li><a class="reference" href="#%24%2CCoordinates"
@@ -1318,7 +878,7 @@ function main() {
   </div>
   <div class="nine columns" id="content">
   <div id="tocRoot"></div>
-  <p class="module-desc">Examples:<pre class="listing"><span class="Keyword">import</span> <span class="Identifier">times</span>
+  <p class="module-desc"><pre class="listing"><span class="Keyword">import</span> <span class="Identifier">times</span>
 <span class="Keyword">import</span> <span class="Identifier">timezones</span>
 
 <span class="Comment"># Create a timezone representing a static offset from UTC.</span>
@@ -1328,39 +888,28 @@ function main() {
 
 <span class="Comment"># Static offset timezones can also be created with the proc ``staticTz``,</span>
 <span class="Comment"># which is preferable if the offset is only known at runtime.</span>
-<span class="Identifier">doAsert</span> <span class="Identifier">zone</span> <span class="Operator">==</span> <span class="Identifier">staticTz</span><span class="Punctuation">(</span><span class="Identifier">hours</span> <span class="Operator">=</span> <span class="Operator">-</span><span class="DecNumber">2</span><span class="Punctuation">,</span> <span class="Identifier">minutes</span> <span class="Operator">=</span> <span class="Operator">-</span><span class="DecNumber">30</span><span class="Punctuation">)</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">zone</span> <span class="Operator">==</span> <span class="Identifier">staticTz</span><span class="Punctuation">(</span><span class="Identifier">hours</span> <span class="Operator">=</span> <span class="Operator">-</span><span class="DecNumber">2</span><span class="Punctuation">,</span> <span class="Identifier">minutes</span> <span class="Operator">=</span> <span class="Operator">-</span><span class="DecNumber">30</span><span class="Punctuation">)</span>
 
 <span class="Comment"># Create a timezone representing a timezone in the IANA timezone database.</span>
 <span class="Keyword">let</span> <span class="Identifier">stockholm</span> <span class="Operator">=</span> <span class="RawData">tz&quot;Europe/Stockholm&quot;</span>
 <span class="Identifier">echo</span> <span class="Identifier">initDateTime</span><span class="Punctuation">(</span><span class="DecNumber">1</span><span class="Punctuation">,</span> <span class="Identifier">mJan</span><span class="Punctuation">,</span> <span class="DecNumber">1850</span><span class="Punctuation">,</span> <span class="DecNumber">00</span><span class="Punctuation">,</span> <span class="DecNumber">00</span><span class="Punctuation">,</span> <span class="DecNumber">00</span><span class="Punctuation">,</span> <span class="Identifier">stockholm</span><span class="Punctuation">)</span>
 <span class="Comment"># =&gt; 1850-01-01T00:00:00+01:12</span>
 
-<span class="Comment"># Get a list of timezones used by a country.</span>
-<span class="Comment"># The country is specified with it's two character country code,</span>
+<span class="Comment"># Like above, but returns a `TimezoneInfo` object which contains some</span>
+<span class="Comment"># extra metadata.</span>
+<span class="Keyword">let</span> <span class="Identifier">stockholmInfo</span> <span class="Operator">=</span> <span class="RawData">tzInfo&quot;Europe/Stockholm&quot;</span>
+<span class="Comment"># Countries are specified with it's two character country code,</span>
 <span class="Comment"># see ISO 3166-1 alpha-2.</span>
-<span class="Keyword">let</span> <span class="Identifier">sweden</span> <span class="Operator">=</span> <span class="Identifier">tzNames</span><span class="Punctuation">(</span><span class="StringLit">&quot;SE&quot;</span><span class="Punctuation">)</span>
-<span class="Identifier">echo</span> <span class="Identifier">sweden</span>
-<span class="Comment"># =&gt; @[&quot;Europe/Stockholm&quot;]</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">stockholmInfo</span><span class="Operator">.</span><span class="Identifier">countries</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Punctuation">[</span><span class="StringLit">&quot;SE&quot;</span><span class="Punctuation">]</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">stockholmInfo</span><span class="Operator">.</span><span class="Identifier">timezone</span> <span class="Operator">==</span> <span class="Identifier">stockholm</span>
 
-<span class="Comment"># Note that some countries use many different timezones.</span>
-<span class="Keyword">let</span> <span class="Identifier">usa</span> <span class="Operator">=</span> <span class="Identifier">tzNames</span><span class="Punctuation">(</span><span class="StringLit">&quot;US&quot;</span><span class="Punctuation">)</span>
-<span class="Identifier">echo</span> <span class="Identifier">usa</span>
-<span class="Comment"># =&gt; @[</span>
-<span class="Comment">#   &quot;America/New_York&quot;,  &quot;America/Adak&quot;,      &quot;America/Phoenix&quot;,     &quot;America/Yakutat&quot;,</span>
-<span class="Comment">#   &quot;Pacific/Honolulu&quot;,  &quot;America/Nome&quot;,      &quot;America/Los_Angeles&quot;, &quot;America/Detroit&quot;,</span>
-<span class="Comment">#   &quot;America/Chicago&quot;,   &quot;America/Boise&quot;,     &quot;America/Juneau&quot;,      &quot;America/Metlakatla&quot;,</span>
-<span class="Comment">#   &quot;America/Anchorage&quot;, &quot;America/Menominee&quot;, &quot;America/Sitka&quot;,       &quot;America/Denver&quot;</span>
-<span class="Comment"># ]</span>
-
-<span class="Comment"># Get a list of countries that are known to use a timezone.</span>
 <span class="Comment"># Note that some timezones are used by multiple countries.</span>
-<span class="Keyword">let</span> <span class="Identifier">bangkok</span> <span class="Operator">=</span> <span class="RawData">tz&quot;Asia/Bangkok&quot;</span>
-<span class="Identifier">echo</span> <span class="Identifier">bangkok</span><span class="Operator">.</span><span class="Identifier">countries</span>
-<span class="Comment"># =&gt; @[&quot;TH&quot;, &quot;KH&quot;, &quot;LA&quot;, &quot;VN&quot;]</span></pre></p>
+<span class="Keyword">let</span> <span class="Identifier">bangkok</span> <span class="Operator">=</span> <span class="RawData">tzInfo&quot;Asia/Bangkok&quot;</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">bangkok</span><span class="Operator">.</span><span class="Identifier">countries</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Punctuation">[</span><span class="StringLit">&quot;TH&quot;</span><span class="Punctuation">,</span> <span class="StringLit">&quot;KH&quot;</span><span class="Punctuation">,</span> <span class="StringLit">&quot;LA&quot;</span><span class="Punctuation">,</span> <span class="StringLit">&quot;VN&quot;</span><span class="Punctuation">]</span></pre></p>
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
-<a class="reference external" href="timezonefile.html">timezonefile</a>, <a class="reference external" href="sharedtypes.html">sharedtypes</a>, <a class="reference external" href="tzversion.html">tzversion</a>
+<a class="reference external" href="timezonedbs.html">timezonedbs</a>, <a class="reference external" href="coordinates.html">coordinates</a>, <a class="reference external" href="tzversion.html">tzversion</a>
 </dl></div>
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
@@ -1368,15 +917,37 @@ function main() {
 <a id="Country"></a>
 <dt><pre><a href="timezones.html#Country"><span class="Identifier">Country</span></a> <span class="Other">=</span> <span class="Identifier">string</span></pre></dt>
 <dd>
-<p>A country is represented by a two character country code, using ISO 3166-1 alpha-2.</p>
+<p>
+A country is represented by a two character country code, using ISO 3166-1 alpha-2.</p>
 <p>See <a class="reference external" href="https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2">https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2</a>.</p>
 
 
 </dd>
-<a id="TzData"></a>
-<dt><pre><a href="timezones.html#TzData"><span class="Identifier">TzData</span></a> <span class="Other">=</span> <span class="Identifier">TzDataImpl</span></pre></dt>
+<a id="TimezoneDb"></a>
+<dt><pre><a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a> <span class="Other">=</span> <span class="Identifier">TimezoneDbImpl</span></pre></dt>
 <dd>
-Contains the timezone data for a specific IANA timezone database version.
+
+A collection of loaded timezones, typically from a specific release of the IANA timezone database.
+
+</dd>
+<a id="TimezoneInfo"></a>
+<dt><pre><a href="timezones.html#TimezoneInfo"><span class="Identifier">TimezoneInfo</span></a> <span class="Other">=</span> <span class="Keyword">object</span>
+  <span class="Identifier">timezone</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Timezone</span>          <span class="Comment">## \</span>
+                    <span class="Comment">## The timezone as a ``times.Timezone`` object.</span>
+  <span class="Identifier">countries</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">]</span>     <span class="Comment">## \</span>
+                         <span class="Comment">## Get a list of countries that are</span>
+                         <span class="Comment">## known to use this timezone.</span>
+                         <span class="Comment">## Note that some countries use</span>
+                         <span class="Comment">## multiple timezones.</span>
+  <span class="Identifier">location</span><span class="Operator">*</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><a href="coordinates.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">]</span> <span class="Comment">## \</span>
+                               <span class="Comment">## Get the coordinates of a timezone. This is generally the</span>
+                               <span class="Comment">## coordinates of the city in the timezone name.</span>
+                               <span class="Comment">## E.g ``db.location&quot;Europe/Stockholm&quot;`` will give the the</span>
+                               <span class="Comment">## coordinates of Stockholm, the capital of Sweden.</span>
+  </pre></dt>
+<dd>
+
+A timezone with additional metadata attached.
 
 </dd>
 <a id="Dms"></a>
@@ -1397,143 +968,24 @@ Earth coordinates.
 </dd>
 
 </dl></div>
-<div class="section" id="9">
-<h1><a class="toc-backref" href="#9">Lets</a></h1>
-<dl class="item">
-<a id="EmbeededTzData"></a>
-<dt><pre><span class="Identifier">EmbeededTzData</span> <span class="Other">=</span> <span class="Identifier">embeededTzDataImpl</span></pre></dt>
-<dd>
-The embeeded tzdata. Not available if <tt class="docutils literal"><span class="pre">-d:timezonesNoEmbeed</span></tt> is used.
-
-</dd>
-
-</dl></div>
 <div class="section" id="12">
 <h1><a class="toc-backref" href="#12">Procs</a></h1>
 <dl class="item">
-<a id="version,TzDataImpl"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">version</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<a id="tz,TimezoneDbImpl,string"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#tz%2CTimezoneDbImpl%2Cstring"><span class="Identifier">tz</span></a><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a><span class="Other">;</span> <span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
-The version of the IANA timezone database being represented by <tt class="docutils literal"><span class="pre">db</span></tt>. The string consist of the year plus a letter. For example, <tt class="docutils literal"><span class="pre">&quot;2018a&quot;</span></tt> is the first database release of 2018, <tt class="docutils literal"><span class="pre">&quot;2018b&quot;</span></tt> the second one and so on.
-
-</dd>
-<a id="countries,TzDataImpl,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">countries</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Get a list of countries that are known to use <tt class="docutils literal"><span class="pre">tzName</span></tt>. The result might be empty. Note that some countries use multiple timezones.
-
-</dd>
-<a id="countries,TzDataImpl,Timezone"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">countries</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">tz</span><span class="Other">:</span> <span class="Identifier">Timezone</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Shorthand for <tt class="docutils literal"><span class="pre">db.countries(tz.name)</span></tt>
-
-</dd>
-<a id="tzNames,TzDataImpl,Country"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">tzNames</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">country</span><span class="Other">:</span> <a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-<p>Get a list of timezone names for timezones known to be used by <tt class="docutils literal"><span class="pre">country</span></tt>.</p>
-<p>Raises a <tt class="docutils literal"><span class="pre">ValueError</span></tt> if <tt class="docutils literal"><span class="pre">country</span></tt> isn't exactly two characters.</p>
-
-
-</dd>
-<a id="location,TzDataImpl,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">location</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><a href="sharedtypes.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-<p>Get the coordinates of a timezone. This is generally the coordinates of the city in the timezone name. E.g <tt class="docutils literal"><span class="pre">db.location&quot;Europe/Stockholm&quot;</span></tt> will give the the coordinates of Stockholm, the capital of Sweden.</p>
-<p>Will return <tt class="docutils literal"><span class="pre">none(Coordinates)</span></tt> if the timezone either doesn't exist in the database, or if it doesn't have any coordinates in the database.</p>
-
-
-</dd>
-<a id="location,TzDataImpl,Timezone"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">location</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">tz</span><span class="Other">:</span> <span class="Identifier">Timezone</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><a href="sharedtypes.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Shorthand for <tt class="docutils literal"><span class="pre">db.location(tz.name)</span></tt>    
-
-</dd>
-<a id="tz,TzDataImpl,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">tz</span><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a><span class="Other">;</span> <span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Create a timezone from a timezone name, where the timezone name is one of the following:<ul class="simple"><li>The string <tt class="docutils literal"><span class="pre">&quot;LOCAL&quot;</span></tt>, representing the systems local timezone.</li>
+Retrieve a timezone from a timezone name, where the timezone name is one of the following:<ul class="simple"><li>The string <tt class="docutils literal"><span class="pre">&quot;LOCAL&quot;</span></tt>, representing the systems local timezone.</li>
 <li>A string of the form <tt class="docutils literal"><span class="pre">&quot;±HH:MM:SS&quot;</span></tt> or <tt class="docutils literal"><span class="pre">&quot;±HH:MM&quot;</span></tt>, representing a fixed offset from UTC. Note that the sign will be the opposite when compared to <tt class="docutils literal"><span class="pre">staticTz</span></tt>. For example, <tt class="docutils literal"><span class="pre">tz&quot;+01:00&quot;</span></tt> is the same as <tt class="docutils literal"><span class="pre">staticTz(hour = -1)</span></tt>.</li>
-<li>A timezone name from the <a class="reference external" href="https://www.iana.org/time-zones">IANA timezone database</a>, also listed on <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">wikipedia</a>.</li>
+<li>A timezone name from the <a class="reference external" href="https://www.iana.org/time-zones">IANA timezone database</a>. See <a class="reference external" href="https://en.wikipedia.org/wiki/List_of_tz_database_time_zones">wikipedia</a> for a list of available timezone names. Note that there is no guranteas about what timezones are available in <tt class="docutils literal"><span class="pre">db</span></tt>, but as a special rule <tt class="docutils literal"><span class="pre">&quot;Etc/UTC&quot;</span></tt> is always supported.</li>
 </ul>
-<p>In case <tt class="docutils literal"><span class="pre">tzName</span></tt> does not follow any of these formats, or the timezone name doesn't exist in the database, a <tt class="docutils literal"><span class="pre">ValueError</span></tt> exception is raised.</p>
+<p>In case <tt class="docutils literal"><span class="pre">tzName</span></tt> does not follow any of these formats, or the timezone name doesn't exist in the database, a <tt class="docutils literal"><span class="pre">ValueError</span></tt> is raised.</p>
 
-
-</dd>
-<a id="parseJsonTimezones,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">parseJsonTimezones</span><span class="Other">(</span><span class="Identifier">content</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">JsonKindError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Parse a timezone database from its JSON representation.
-
-</dd>
-<a id="parseJsonTimezones,Stream"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">parseJsonTimezones</span><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">Stream</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma">
-    <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">JsonKindError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span>
-    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Parse a timezone database from its JSON representation.
-
-</dd>
-<a id="loadJsonTimezones,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">loadJsonTimezones</span><span class="Other">(</span><span class="Identifier">path</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TzData"><span class="Identifier">TzData</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">KeyError</span><span class="Other">,</span>
-    <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">JsonKindError</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Load a timezone database from a JSON file.
-
-</dd>
-<a id="countries,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">countries</span><span class="Other">(</span><span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Convenience proc using the embeeded timezone database.
-<p><strong class="examples_text">Examples:</strong></p>
-<pre class="listing"><span class="Identifier">doAssert</span> <span class="Identifier">countries</span><span class="StringLit">&quot;Europe/Stockholm&quot;</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;SE&quot;</span><span class="Other">]</span>
-<span class="Identifier">doAssert</span> <span class="Identifier">countries</span><span class="StringLit">&quot;Asia/Bangkok&quot;</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;TH&quot;</span><span class="Other">,</span> <span class="StringLit">&quot;KH&quot;</span><span class="Other">,</span> <span class="StringLit">&quot;LA&quot;</span><span class="Other">,</span> <span class="StringLit">&quot;VN&quot;</span><span class="Other">]</span></pre>
-
-</dd>
-<a id="countries,Timezone"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">countries</span><span class="Other">(</span><span class="Identifier">tz</span><span class="Other">:</span> <span class="Identifier">Timezone</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Convenience proc using the embeeded timezone database.
-
-</dd>
-<a id="tzNames,Country"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">tzNames</span><span class="Other">(</span><span class="Identifier">country</span><span class="Other">:</span> <a href="timezones.html#Country"><span class="Identifier">Country</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Convenience proc using the embeeded timezone database.
-<p><strong class="examples_text">Examples:</strong></p>
-<pre class="listing"><span class="Identifier">doAssert</span> <span class="StringLit">&quot;SE&quot;</span><span class="Other">.</span><span class="Identifier">tzNames</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;Europe/Stockholm&quot;</span><span class="Other">]</span>
-<span class="Identifier">doAssert</span> <span class="StringLit">&quot;VN&quot;</span><span class="Other">.</span><span class="Identifier">tzNames</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;Asia/Ho_Chi_Minh&quot;</span><span class="Other">,</span> <span class="StringLit">&quot;Asia/Bangkok&quot;</span><span class="Other">]</span></pre>
-
-</dd>
-<a id="location,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">location</span><span class="Other">(</span><span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><a href="sharedtypes.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Convenience proc using the embeeded timezone database.
-<p><strong class="examples_text">Examples:</strong></p>
-<pre class="listing"><span class="Keyword">import</span>
-  <span class="Identifier">times</span><span class="Other">,</span> <span class="Identifier">options</span>
-
-<span class="Identifier">doAssert</span> <span class="Operator">$</span><span class="Other">(</span><span class="Identifier">location</span><span class="StringLit">&quot;Europe/Stockholm&quot;</span><span class="Other">)</span> <span class="Operator">==</span>
-    <span class="StringLit">r&quot;Some(59° 20′ 0″ N 18° 3′ 0″ E)&quot;</span>
-<span class="Identifier">doAssert</span> <span class="Other">(</span><span class="Identifier">location</span><span class="StringLit">&quot;Etc/UTC&quot;</span><span class="Other">)</span><span class="Other">.</span><span class="Identifier">isNone</span>
-<span class="Identifier">doAssert</span> <span class="Identifier">utc</span><span class="Other">(</span><span class="Other">)</span><span class="Other">.</span><span class="Identifier">location</span><span class="Other">.</span><span class="Identifier">isNone</span></pre>
-
-</dd>
-<a id="location,Timezone"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">location</span><span class="Other">(</span><span class="Identifier">tz</span><span class="Other">:</span> <span class="Identifier">Timezone</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><a href="sharedtypes.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
-<dd>
-Convenience proc using the embeeded timezone database
 
 </dd>
 <a id="tz,string"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">tz</span><span class="Other">(</span><span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dt><pre><span class="Keyword">proc</span> <a href="#tz%2Cstring"><span class="Identifier">tz</span></a><span class="Other">(</span><span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
-Convenience proc using the embeeded timezone database.
+Convenience proc using the default timezone database.
 <p><strong class="examples_text">Examples:</strong></p>
 <pre class="listing"><span class="Keyword">import</span>
   <span class="Identifier">times</span>
@@ -1543,8 +995,44 @@ Convenience proc using the embeeded timezone database.
 <span class="Identifier">doAssert</span> <span class="Operator">$</span><span class="Identifier">dt</span> <span class="Operator">==</span> <span class="StringLit">&quot;1850-01-01T00:00:00+01:12&quot;</span></pre>
 
 </dd>
+<a id="tzInfo,TimezoneDbImpl,string"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#tzInfo%2CTimezoneDbImpl%2Cstring"><span class="Identifier">tzInfo</span></a><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a><span class="Other">;</span> <span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneInfo"><span class="Identifier">TimezoneInfo</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span>
+    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+<p>Retrieve a timezone with additional metadata.</p>
+<p>The <tt class="docutils literal"><span class="pre">tzName</span></tt> parameter follows the same format as <tt class="docutils literal"><span class="pre">db.tz(...)</span></tt>.</p>
+<p>In case <tt class="docutils literal"><span class="pre">tzName</span></tt> has an invalid format, or the timezone name doesn't exist in the database, a <tt class="docutils literal"><span class="pre">ValueError</span></tt> is raised.</p>
+
+
+</dd>
+<a id="tzInfo,string"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#tzInfo%2Cstring"><span class="Identifier">tzInfo</span></a><span class="Other">(</span><span class="Identifier">tzName</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneInfo"><span class="Identifier">TimezoneInfo</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">inline</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Convenience proc using the default timezone database.
+<p><strong class="examples_text">Examples:</strong></p>
+<pre class="listing"><span class="Keyword">import</span>
+  <span class="Identifier">times</span><span class="Other">,</span> <span class="Identifier">options</span>
+
+<span class="Keyword">let</span> <span class="Identifier">stockholmInfo</span> <span class="Other">=</span> <span class="Identifier">tzInfo</span><span class="StringLit">&quot;Europe/Stockholm&quot;</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">stockholmInfo</span><span class="Other">.</span><span class="Identifier">timezone</span> <span class="Operator">==</span> <span class="Identifier">tz</span><span class="StringLit">&quot;Europe/Stockholm&quot;</span>
+<span class="Identifier">doAssert</span> <span class="Identifier">stockholmInfo</span><span class="Other">.</span><span class="Identifier">countries</span> <span class="Operator">==</span> <span class="Operator">@</span><span class="Other">[</span><span class="StringLit">&quot;SE&quot;</span><span class="Other">]</span>
+<span class="Identifier">doAssert</span> <span class="Operator">$</span><span class="Identifier">stockholmInfo</span><span class="Other">.</span><span class="Identifier">location</span> <span class="Operator">==</span> <span class="StringLit">&quot;Some(59° 20′ 0″ N 18° 3′ 0″ E)&quot;</span></pre>
+
+</dd>
+<a id="setDefaultTzDb,TimezoneDbImpl"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#setDefaultTzDb%2CTimezoneDbImpl"><span class="Identifier">setDefaultTzDb</span></a><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a><span class="Other">)</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Sets the timezone database that will be used for <tt class="docutils literal"><span class="pre">tz(tzName)</span></tt> and <tt class="docutils literal"><span class="pre">tzInfo(tzName)</span></tt>. The default timezone database is stored in a thread local variable, so calling this only affects the calling thread!
+
+</dd>
+<a id="getDefaultTzDb"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#getDefaultTzDb"><span class="Identifier">getDefaultTzDb</span></a><span class="Other">(</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Gets the timezone database that is used for <tt class="docutils literal"><span class="pre">tz(tzName)</span></tt> and <tt class="docutils literal"><span class="pre">tzInfo(tzName)</span></tt>. The default timezone database is stored in a thread local varaible, so calling <tt class="docutils literal"><span class="pre">setDefaultTzDb</span></tt> only affects the calling thread!
+
+</dd>
 <a id="staticTz,int,int,int"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">staticTz</span><span class="Other">(</span><span class="Identifier">hours</span><span class="Other">,</span> <span class="Identifier">minutes</span><span class="Other">,</span> <span class="Identifier">seconds</span><span class="Other">:</span> <span class="Identifier">int</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">noSideEffect</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
+<dt><pre><span class="Keyword">proc</span> <a href="#staticTz%2Cint%2Cint%2Cint"><span class="Identifier">staticTz</span></a><span class="Other">(</span><span class="Identifier">hours</span><span class="Other">,</span> <span class="Identifier">minutes</span><span class="Other">,</span> <span class="Identifier">seconds</span><span class="Other">:</span> <span class="Identifier">int</span> <span class="Other">=</span> <span class="DecNumber">0</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Timezone</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">noSideEffect</span><span class="Other">,</span> <span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span>
     <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
 Create a timezone using a static offset from UTC.
@@ -1558,16 +1046,54 @@ Create a timezone using a static offset from UTC.
 <span class="Identifier">doAssert</span> <span class="Operator">$</span><span class="Identifier">dt</span> <span class="Operator">==</span> <span class="StringLit">&quot;2000-01-01T12:00:00+02:30&quot;</span></pre>
 
 </dd>
-<a id="initCoordinates,,"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">initCoordinates</span><span class="Other">(</span><span class="Identifier">lat</span><span class="Other">,</span> <span class="Identifier">lon</span><span class="Other">:</span> <span class="Other">(</span><span class="Identifier">int16</span><span class="Other">,</span> <span class="Identifier">int16</span><span class="Other">,</span> <span class="Identifier">int16</span><span class="Other">)</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#Coordinates"><span class="Identifier">Coordinates</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<a id="parseTzDb,string"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#parseTzDb%2Cstring"><span class="Identifier">parseTzDb</span></a><span class="Other">(</span><span class="Identifier">content</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span>
+    <span class="Identifier">JsonKindError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">Defect</span><span class="Other">,</span> <span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">OSError</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span>
+    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">,</span> <span class="Identifier">WriteIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
+Parse a timezone database from its JSON representation.
+
+</dd>
+<a id="parseTzDb,Stream"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#parseTzDb%2CStream"><span class="Identifier">parseTzDb</span></a><span class="Other">(</span><span class="Identifier">s</span><span class="Other">:</span> <span class="Identifier">Stream</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">JsonKindError</span><span class="Other">,</span>
+    <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">Defect</span><span class="Other">,</span> <span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">OSError</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span>
+                                    <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ReadIOEffect</span><span class="Other">,</span> <span class="Identifier">WriteIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Parse a timezone database from its JSON representation.
+
+</dd>
+<a id="loadTzDb,string"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#loadTzDb%2Cstring"><span class="Identifier">loadTzDb</span></a><span class="Other">(</span><span class="Identifier">path</span><span class="Other">:</span> <span class="Identifier">string</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">IOError</span><span class="Other">,</span> <span class="Identifier">Exception</span><span class="Other">,</span> <span class="Identifier">OSError</span><span class="Other">,</span>
+    <span class="Identifier">KeyError</span><span class="Other">,</span> <span class="Identifier">ValueError</span><span class="Other">,</span> <span class="Identifier">JsonKindError</span><span class="Other">,</span> <span class="Identifier">Defect</span><span class="Other">,</span> <span class="Identifier">JsonParsingError</span><span class="Other">]</span><span class="Other">,</span>
+                                      <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">WriteIOEffect</span><span class="Other">,</span> <span class="Identifier">ReadIOEffect</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Load a timezone database from a JSON file.
+
+</dd>
+<a id="version,TimezoneDbImpl"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#version%2CTimezoneDbImpl"><span class="Identifier">version</span></a><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+<p>The version of the IANA timezone database being represented by <tt class="docutils literal"><span class="pre">db</span></tt>. The string consist of the year plus a letter. For example, <tt class="docutils literal"><span class="pre">&quot;2018a&quot;</span></tt> is the first database release of 2018, <tt class="docutils literal"><span class="pre">&quot;2018b&quot;</span></tt> the second one and so on.</p>
+<p>If the version is unknown, returns <tt class="docutils literal"><span class="pre">&quot;&quot;</span></tt>.</p>
 
 
 </dd>
-<a id="$,Coordinates"></a>
-<dt><pre><span class="Keyword">proc</span> <span class="Identifier">`$`</span><span class="Other">(</span><span class="Identifier">coords</span><span class="Other">:</span> <a href="timezones.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Identifier">ValueError</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<a id="tzNames,TimezoneDbImpl"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#tzNames%2CTimezoneDbImpl"><span class="Identifier">tzNames</span></a><span class="Other">(</span><span class="Identifier">db</span><span class="Other">:</span> <a href="timezones.html#TimezoneDb"><span class="Identifier">TimezoneDb</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">seq</span><span class="Other">[</span><span class="Identifier">string</span><span class="Other">]</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
 <dd>
+Retrieve a list of all available timezones in <tt class="docutils literal"><span class="pre">db</span></tt>.
 
+</dd>
+<a id="initCoordinates,,"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#initCoordinates%2C%2C"><span class="Identifier">initCoordinates</span></a><span class="Other">(</span><span class="Identifier">lat</span><span class="Other">,</span> <span class="Identifier">lon</span><span class="Other">:</span> <span class="Other">(</span><span class="Identifier">int16</span><span class="Other">,</span> <span class="Identifier">int16</span><span class="Other">,</span> <span class="Identifier">int16</span><span class="Other">)</span><span class="Other">)</span><span class="Other">:</span> <a href="timezones.html#Coordinates"><span class="Identifier">Coordinates</span></a> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Create a coordinates object.
+
+</dd>
+<a id="$,Coordinates"></a>
+<dt><pre><span class="Keyword">proc</span> <a href="#%24%2CCoordinates"><span class="Identifier">`$`</span></a><span class="Other">(</span><span class="Identifier">coords</span><span class="Other">:</span> <a href="timezones.html#Coordinates"><span class="Identifier">Coordinates</span></a><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">string</span> <span><span class="Other">{</span><span class="Other pragmadots">...</span><span class="Other">}</span></span><span class="pragmawrap"><span class="Other">{.</span><span class="pragma"><span class="Identifier">raises</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span><span class="Other">,</span> <span class="Identifier">tags</span><span class="Other">:</span> <span class="Other">[</span><span class="Other">]</span></span><span class="Other">.}</span></span></pre></dt>
+<dd>
+Human-friendly stringification of coordinates.
 <p><strong class="examples_text">Examples:</strong></p>
 <pre class="listing"><span class="Keyword">let</span> <span class="Identifier">loc</span> <span class="Other">=</span> <span class="Identifier">initCoordinates</span><span class="Other">(</span><span class="Other">(</span><span class="DecNumber">1'i16</span><span class="Other">,</span> <span class="DecNumber">2'i16</span><span class="Other">,</span> <span class="DecNumber">3'i16</span><span class="Other">)</span><span class="Other">,</span> <span class="Other">(</span><span class="DecNumber">4'i16</span><span class="Other">,</span> <span class="DecNumber">5'i16</span><span class="Other">,</span> <span class="DecNumber">6'i16</span><span class="Other">)</span><span class="Other">)</span>
 <span class="Identifier">doAssert</span> <span class="Operator">$</span><span class="Identifier">loc</span> <span class="Operator">==</span> <span class="StringLit">r&quot;1° 2′ 3″ N 4° 5′ 6″ E&quot;</span></pre>
@@ -1583,7 +1109,7 @@ Create a timezone using a static offset from UTC.
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br/>
-        <small>Made with Nim. Generated: 2018-11-05 15:11:54 UTC</small>
+        <small>Made with Nim. Generated: 2019-02-09 07:17:56 UTC</small>
       </div>
     </div>
   </div>
