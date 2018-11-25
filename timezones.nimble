@@ -1,4 +1,4 @@
-import std / ospaths
+import std / strformat
 import timezones / private / tzversion
 
 version       = "0.4.3"
@@ -14,10 +14,12 @@ requires "nim >= 0.19.0"
 # Tasks
 
 task fetch, "Fetch the timezone database":
-    exec "fetchjsontimezones " & paramStr(2) & " --out:" & (thisDir() / (paramStr(2) & ".json"))
+    exec fmt"fetchjsontimezones {paramStr(2)} " &
+         fmt"--out:{thisDir()}/{paramStr(2)}.json"
 
 task test, "Run the tests":
-    let tzdataPath = thisDir() / (Version & ".json")
+    echo thisDir()
+    let tzdataPath = fmt"{thisDir()}/{Version}.json"
 
     echo "\nRunning tests (C)"
     echo "==============="
@@ -34,7 +36,7 @@ task test, "Run the tests":
 
     echo "\nTesting -d:timezonesPath (JS)"
     echo "================"
-    exec "nim js -d:nodejs --hints:off -d:timezonesPath='" & tzdataPath & 
+    exec "nim js -d:nodejs --hints:off -d:timezonesPath='" & tzdataPath &
         "' -r tests/tests.nim"
 
 task docs, "Generate docs":
