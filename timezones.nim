@@ -82,38 +82,25 @@ proc version*(db: TzData): string =
     ## the second one and so on.
     timezonefile.TzData(db).version
 
-template binarySeach(transitions: seq[Transition],
+template linearSeach(transitions: seq[Transition],
                      field: untyped,
                      t: Time): int =
-    # We subtract 1, because we wan't the lower bound index
-    # even if there's an exact match (because we prefer the earlier
-    # transition when ambiguous).
-    # TODO: Try to improve this a bit
-    let unix = t.toUnix - 1
-    var lower = 0
-    var upper = transitions.high
-    var mid: int
-    var success = false
-
-    while lower <= upper:
-        mid = (lower + upper) div 2
-        if transitions[mid].field < unix:
-            lower = mid + 1
-        elif transitions[mid].field > unix:
-            upper = mid - 1
-        else:
-            success = true
-            break
-
-    if success:
-        mid
+    let unix = t.toUnix
+    var index: int
+    if transitions[0].field >= unix:
+        index = 0
+    elif transitions[^1].field <= unix:
+        index = transitions.high
     else:
-        # Note that `upper` is actually the lower value now (see the loop)
-        max(0, upper)
+        index = 1
+        while unix >= transitions[index].field:
+            index.inc
+        index.dec
+    index
 
 proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
     proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
-        let index = tz.transitions.binarySeach(startAdj, adjTime)
+        let index = tz.transitions.linearSeach(startAdj, adjTime)
         let transition = tz.transitions[index]
 
         if index < tz.transitions.high:
@@ -128,10 +115,6 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
                 result.time = adjTime + initDuration(seconds = result.utcOffset)
                 return
 
-        result.isDst = transition.isDst
-        result.utcOffset = -transition.utcOffset
-        result.time = adjTime + initDuration(seconds = result.utcOffset)
-
         if index != 0:
             let prevTransition = tz.transitions[index - 1]
             let offsetDiff = transition.utcOffset - prevTransition.utcOffset
@@ -144,9 +127,16 @@ proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
                         adjUnix < transition.startAdj - offsetDiff:
                     result.isDst = prevTransition.isDst
                     result.utcOffset = -prevTransition.utcOffset
+                    result.time = adjTime +
+                        initDuration(seconds = result.utcOffset)
+                    return
+
+        result.isDst = transition.isDst
+        result.utcOffset = -transition.utcOffset
+        result.time = adjTime + initDuration(seconds = result.utcOffset)
 
     proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
-        let index = tz.transitions.binarySeach(startUtc, time)
+        let index = tz.transitions.linearSeach(startUtc, time)
         let transition = tz.transitions[index]
         result.isDst = transition.isDst
         result.utcOffset = -transition.utcOffset
