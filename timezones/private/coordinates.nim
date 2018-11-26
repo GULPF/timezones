@@ -1,7 +1,3 @@
-# This file contains some data types and procs that are needed by
-# ``timezonefile`` but also need to be exported by the end user.
-# This seperation is done so that ``include`` can be abused for doc gen.
-
 import std / strutils
 
 type
@@ -27,3 +23,4 @@ proc `$`*(coords: Coordinates): string =
         coords.lat.deg, coords.lat.min, coords.lat.sec, latD,
         coords.lon.deg, coords.lon.min, coords.lon.sec, lonD
     )
+

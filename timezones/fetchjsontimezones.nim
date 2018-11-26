@@ -1,6 +1,6 @@
 import std / [httpclient, os, osproc, strformat, sequtils, strutils, times,
     options,  parseopt,  tables]
-import private / [timezonefile, sharedtypes]
+import private / [timezonefile, coordinates, zone1970, posixtimezones_impl]
 
 const TmpDir = "/tmp/fetchtz"
 const UnpackDir = TmpDir / "unpacked"
@@ -75,30 +75,31 @@ proc zdump(startYear, endYear: int32,
 
         processZdumpZone(tzname, content, appendTo = result)
 
-proc parseCoordinate(str: string): Coordinates =
-    template parse(s: string): int16 = s.parseInt.int16
+proc loadZicOutput(tznames: Option[seq[string]]): Table[string, TimezoneData] =
+    result = initTable[string, TimezoneData]()
+    for tzfile in walkDirRec(ZicDir, {pcFile}):
+        let (dir, city, _) = tzfile.splitFile
 
-    case str.len
-    of "+DDMM+DDDMM".len:
-        let lat = (str[0..2].parse, str[3..4].parse,  0'i16)
-        let lon = (str[5..8].parse, str[9..10].parse, 0'i16)
-        result = initCoordinates(lat, lon)
-    of "+DDMMSS+DDDMMSS".len:
-        let lat = (str[0..2].parse,  str[3..4].parse,   str[5..6].parse)
-        let lon = (str[7..10].parse, str[11..12].parse, str[13..14].parse)
-        result = initCoordinates(lat, lon)
-    else:
-        doAssert false
+        # Special zones like CET have no subfolder
+        let tzname =
+            if dir == ZicDir:
+                city
+            else:
+                let country = dir.extractFilename
+                country & "/" & city # E.g Europe/Stockholm
 
-proc zone1970(zones: var Table[string, TimezoneData]) =
+        if tznames.isSome and tzname notin tznames.get:
+            let info = loadTzInfoImpl(tzfile)
+            # result[tzname] = TimezoneData(
+            #     transitions
+            # )
+
+proc loadZone1970(zones: var Table[string, TimezoneData]) =
     ## Parses the ``zone1970.tab`` file and sets the locations.
-    for line in lines(UnpackDir / "zone1970.tab"):
-        if line[0] == '#': continue
-        let tokens = line.split '\t'
-        let (ccStr, coordStr, tzname) = (tokens[0], tokens[1], tokens[2])
-        if tzname in zones:
-            zones[tzname].coordinates = parseCoordinate(coordStr)
-            zones[tzname].countries = ccStr.split(',').mapIt(cc(it))
+    let path = UnpackDir / "zone1970.tab"
+    for countries, coords, tzName of zone1970Entries(path):
+        zones[tzname].coordinates = coords
+        zones[tzname].countries = countries.mapIt(cc(it))
 
 proc fetchTimezoneDatabase*(version: string, dest = ".",
                             startYear, endYear: int32,
@@ -109,7 +110,7 @@ proc fetchTimezoneDatabase*(version: string, dest = ".",
     download version
     zic regions
     var zones = zdump(startYear, endYear, tznames)
-    zone1970(zones)
+    loadZone1970(zones)
     let db = initTzData(version, toSeq(zones.values))
     db.saveToFile(dest)
 

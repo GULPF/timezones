@@ -1,5 +1,5 @@
 import std / [strutils, sequtils, json, tables, hashes, macros]
-import sharedtypes
+import coordinates
 
 when not defined(JS):
     import std / [os, streams]

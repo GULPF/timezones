@@ -46,13 +46,13 @@ Examples:
 ]##
 
 import std / [times, strutils, sequtils, tables, macros, options]
-import timezones / private / [timezonefile, sharedtypes, tzversion]
+import timezones / private / [timezonefile, coordinates, tzversion]
 
 when not defined(js):
     import std / [os, streams]
 
 when not defined(nimdoc):
-    export sharedtypes
+    export coordinates
 
 type
     Country* = string ## A country is represented by
@@ -65,6 +65,13 @@ type
     TzDataImpl = distinct timezonefile.TzData
     TzData* = TzDataImpl ## Contains the timezone data
         ## for a specific IANA timezone database version.
+
+    TimezoneInfo* = object
+        timezone*: Timezone
+        countries*: seq[Country]
+        location*: Option[Coordinates]
+        stdName*: string
+        dstName*: Option[string]
 
 # These are templates to avoid taking the perf hit of a function call
 # in JS (note that {.inline.} relies on the C compiler).
@@ -378,4 +385,4 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
 # Trick to simplify doc gen.
 # This might break in the future
 when defined(nimdoc):
-    include timezones/private/sharedtypes
+    include timezones/private/coordinates
