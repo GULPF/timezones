@@ -45,8 +45,13 @@ Examples:
     # => @["TH", "KH", "LA", "VN"]
 ]##
 
+#TODO:
+#[
+ - Add a binary format for TzData.
+]#
+
 import std / [times, strutils, sequtils, tables, macros, options]
-import timezones / private / [timezonefile, coordinates, tzversion]
+import timezones / private / [timezonedbs, coordinates, tzversion]
 
 when not defined(js):
     import std / [os, streams]
@@ -60,139 +65,38 @@ type
         ##
         ## See https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
 
-    # Instead of re-exporting timezonefile.TzData we need to do it like this
-    # to avoid having the fields of timezonefile.TzData re-exported as well.
-    TzDataImpl = distinct timezonefile.TzData
-    TzData* = TzDataImpl ## Contains the timezone data
-        ## for a specific IANA timezone database version.
+    # Instead of re-exporting timezonedbs.TzData we need to do it like this
+    # to avoid having the fields of timezonedbs.TzData re-exported as well.
+    TimezoneDbImpl = distinct timezonedbs.TimezoneDb
+    TimezoneDb* = TimezoneDbImpl ## Contains the timezone data
+                         ## for a specific IANA timezone database version.
 
-    TimezoneInfo* = object
-        timezone*: Timezone
-        countries*: seq[Country]
-        location*: Option[Coordinates]
-        stdName*: string
-        dstName*: Option[string]
+    TimezoneInfo* = object ## A timezone with additional meta data attached.
+        timezone*: Timezone             ## The timezone as a ``times.Timezone``
+                                        ## object.
+        countries*: seq[Country]        ## Get a list of countries that are
+                                        ## known to use this timezone.
+                                        ## Note that some countries use
+                                        ## multiple timezones.
+        location*: Option[Coordinates]  ## Get the coordinates of a timezone.
+                                        ## This is generally the coordinates
+                                        ## of the city in the timezone name.
+                                        ## E.g ``db.location"Europe/Stockholm"``
+                                        ## will give the the coordinates of
+                                        ## Stockholm, the capital of Sweden.
 
-# These are templates to avoid taking the perf hit of a function call
-# in JS (note that {.inline.} relies on the C compiler).
-
-template tzsByCountry(db: TzData): Table[CountryCode, seq[TimezoneData]] =
-    timezonefile.TzData(db).tzsByCountry
-
-template tzByName(db: TzData): Table[string, TimezoneData] =
-    timezonefile.TzData(db).tzByName
-
-proc version*(db: TzData): string =
+proc version*(db: TimezoneDb): string =
     ## The version of the IANA timezone database being represented by ``db``.
     ## The string consist of the year plus a letter. For example, ``"2018a"``
     ## is the first database release of 2018, ``"2018b"``
     ## the second one and so on.
-    timezonefile.TzData(db).version
+    timezonedbs.TimezoneDb(db).version
 
-template linearSeach(transitions: seq[Transition],
-                     field: untyped,
-                     t: Time): int =
-    let unix = t.toUnix
-    var index: int
-    if transitions[0].field >= unix:
-        index = 0
-    elif transitions[^1].field <= unix:
-        index = transitions.high
-    else:
-        index = 1
-        while unix >= transitions[index].field:
-            index.inc
-        index.dec
-    index
-
-proc initTimezone(tzName: string, tz: TimezoneData): Timezone =
-    proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
-        let index = tz.transitions.linearSeach(startAdj, adjTime)
-        let transition = tz.transitions[index]
-
-        if index < tz.transitions.high:
-            let current = tz.transitions[index]
-            let next = tz.transitions[index + 1]
-            let offsetDiff = next.utcOffset - current.utcOffset
-            # This means that we are in the invalid time between two transitions
-            if adjTime.toUnix > next.startAdj - offsetDiff:
-                result.isDst = next.isDst
-                result.utcOffset = -next.utcOffset
-                let adjTime = adjTime + initDuration(seconds = offsetDiff)
-                result.time = adjTime + initDuration(seconds = result.utcOffset)
-                return
-
-        if index != 0:
-            let prevTransition = tz.transitions[index - 1]
-            let offsetDiff = transition.utcOffset - prevTransition.utcOffset
-            let adjUnix = adjTime.toUnix
-
-            if offsetDiff < 0:
-                # Times in this interval are ambiguous
-                # Resolved by picking earlier transition
-                if transition.startAdj <= adjUnix and
-                        adjUnix < transition.startAdj - offsetDiff:
-                    result.isDst = prevTransition.isDst
-                    result.utcOffset = -prevTransition.utcOffset
-                    result.time = adjTime +
-                        initDuration(seconds = result.utcOffset)
-                    return
-
-        result.isDst = transition.isDst
-        result.utcOffset = -transition.utcOffset
-        result.time = adjTime + initDuration(seconds = result.utcOffset)
-
-    proc zoneInfoFromTime(time: Time): ZonedTime {.locks: 0.} =
-        let index = tz.transitions.linearSeach(startUtc, time)
-        let transition = tz.transitions[index]
-        result.isDst = transition.isDst
-        result.utcOffset = -transition.utcOffset
-        result.time = time
-
-    result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
-
-proc getTz(db: TzData, tzName: string): Option[TimezoneData] {.inline.} =
-    result = option(db.tzByName.getOrDefault(tzName))
-
-proc countries*(db: TzData, tzName: string): seq[Country] =
-    ## Get a list of countries that are known to use ``tzName``.
-    ## The result might be empty. Note that some countries use
-    ## multiple timezones.
-    let tz = db.getTz(tzName).get(nil)
-    result = if tz.isNil: @[] else: tz.countries.mapIt($it)
-
-proc countries*(db: TzData, tz: Timezone): seq[Country] {.inline.} =
-    ## Shorthand for ``db.countries(tz.name)``
-    db.countries(tz.name)
-
-proc tzNames*(db: TzData, country: Country): seq[string] =
-    ## Get a list of timezone names for timezones
-    ## known to be used by ``country``.
-    ##
-    ## Raises a ``ValueError`` if ``country`` isn't exactly two characters.
-    let code = cc(country)
-    let zonesData = db.tzsByCountry.getOrDefault(code, newSeq[TimezoneData]())
-    result = zonesData.mapIt(it.name)
-
-proc location*(db: TzData, tzName: string): Option[Coordinates] =
-    ## Get the coordinates of a timezone. This is generally the coordinates
-    ## of the city in the timezone name.
-    ## E.g ``db.location"Europe/Stockholm"`` will give the the coordinates
-    ## of Stockholm, the capital of Sweden.
-    ##
-    ## Will return ``none(Coordinates)`` if the timezone either doesn't
-    ## exist in the database, or if it doesn't have any coordinates in the
-    ## database.
-    let tz = db.getTz(tzName).get(nil)
-    # `TimezoneData` should probably store `coordinates` as an `Option`,
-    # but (0, 0) is in the middle of the ocean so it only matters in principle.
-    var default: Coordinates
-    if not tz.isNil and tz.coordinates != default:
-        result = some(tz.coordinates)
-
-proc location*(db: TzData, tz: Timezone): Option[Coordinates] {.inline.} =
-    ## Shorthand for ``db.location(tz.name)``
-    db.location(tz.name)
+proc getTz(db: TimezoneDb,
+           tzName: string): (bool, TimezoneInternal) {.inline.} =
+    let tz = timezonedbs.TimezoneDb(db).tzByName.getOrDefault(tzName)
+    if tz.name != "":
+        result = (true, tz)
 
 proc newTimezone(tzName: string, offset: int): Timezone =
     proc zoneInfoFromAdjTime(adjTime: Time): ZonedTime {.locks: 0.} =
@@ -207,24 +111,24 @@ proc newTimezone(tzName: string, offset: int): Timezone =
 
     result = newTimezone(tzName, zoneInfoFromTime, zoneInfoFromAdjTime)
 
-proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
-    ## Create a timezone from a timezone name, where the timezone name is one
+proc tz*(db: TimezoneDb, tzName: string): Timezone {.inline.} =
+    ## Retrieve a timezone from a timezone name, where the timezone name is one
     ## of the following:
     ## - The string ``"LOCAL"``, representing the systems local timezone.
     ## - A string of the form ``"±HH:MM:SS"`` or ``"±HH:MM"``, representing a
-    #    fixed offset from UTC. Note that the sign will be the opposite when
+    ##   fixed offset from UTC. Note that the sign will be the opposite when
     ##   compared to ``staticTz``. For example, ``tz"+01:00"`` is the same as
     ##   ``staticTz(hour = -1)``.
     ## - A timezone name from the
-    ##   `IANA timezone database <https://www.iana.org/time-zones>`_,
-    ##   also listed on
+    ##   `IANA timezone database <https://www.iana.org/time-zones>`_.
+    ##   See
     ##   `wikipedia <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>`_.
+    ##   for a list of available timezone names.
     ##
     ## In case ``tzName`` does not follow any of these formats, or the timezone
     ## name doesn't exist in the database, a ``ValueError`` exception is raised.
     if tzName.len == 0:
         raise newException(ValueError, "Timezone name can't be empty")
-
     if tzName == "LOCAL":
         result = local()
     elif tzName[0] in {'-', '+'}:
@@ -257,28 +161,49 @@ proc tz*(db: TzData, tzName: string): Timezone {.inline.} =
         else:
             error()
     else:
-        let tz = db.getTz(tzName).get(nil)
-        if tz.isNil:
+        let (exists, tz) = db.getTz(tzName)
+        if not exists:
             raise newException(ValueError,
                 "Timezone does not exist in database: " & tzName)
-        result = initTimezone(tzName, tz)
+        result = newTimezone(tz)
 
-proc parseJsonTimezones*(content: string): TzData =
+proc tzInfo*(db: TimezoneDb, tzName: string): TimezoneInfo {.inline.} =
+    ## Retrieve a timezone with additional meta data.
+    ## Supports the same formats as ``db.tz(...)``.
+    if tzName.len == 0:
+        raise newException(ValueError, "Timezone name can't be empty")
+
+    if tzName == "LOCAL":
+        result.timezone = local()
+        return
+    elif tzName[0] in {'-', '+'}:
+        result.timezone = db.tz(tzname)
+    else:
+        let (exists, tz) = db.getTz(tzName)
+        if not exists:
+            raise newException(ValueError,
+                "Timezone does not exist in database: " & tzName)
+        result.timezone = newTimezone(tz)
+        result.countries = tz.countries.mapIt($it)
+        result.location = tz.location
+
+
+proc parseJsonTimezones*(content: string): TimezoneDb =
     ## Parse a timezone database from its JSON representation.
-    parseTzData(content).TzData
+    parseTzData(content).TimezoneDb
 
 when not defined(js):
-    proc parseJsonTimezones*(s: Stream): TzData =
+    proc parseJsonTimezones*(s: Stream): TimezoneDb =
         ## Parse a timezone database from its JSON representation.
-        parseTzData(s).TzData
+        parseTzData(s).TimezoneDb
 
-    proc loadJsonTimezones*(path: string): TzData =
+    proc loadJsonTimezones*(path: string): TimezoneDb =
         ## Load a timezone database from a JSON file.
         let fs = openFileStream(path, fmRead)
         defer: fs.close
-        parseTzData(fs).TzData
+        parseTzData(fs).TimezoneDb
 
-# xxx the silly default path is because it's relative to "timezonefile.nim"
+# xxx the silly default path is because it's relative to "timezonedbs.nim"
 when not defined(nimsuggest):
     when not defined(timezonesPath):
         const timezonesPath = "./" & Version & ".json"
@@ -298,47 +223,13 @@ when defined(timezonesPath) and defined(timezonesNoEmbeed):
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
 
-    let embeededTzDataImpl = parseTzData(content).TzData
+    let embeededTzDataImpl = parseTzData(content).TimezoneDb
     let EmbeededTzData* = embeededTzDataImpl ## The embeeded tzdata.
         ## Not available if ``-d:timezonesNoEmbeed`` is used.
 
     when not defined(nimdoc):
-        template EmbeededTzdb*(): TzData
+        template EmbeededTzdb*(): TimezoneDb
             {.deprecated: "Renamed to EmbeededTzData".} = EmbeededTzData
-
-    {.push inline.}
-
-    proc countries*(tzName: string): seq[Country] =
-        ## Convenience proc using the embeeded timezone database.
-        runnableExamples:
-            doAssert countries"Europe/Stockholm" == @["SE"]
-            doAssert countries"Asia/Bangkok" == @["TH", "KH", "LA", "VN"]
-        EmbeededTzData.countries(tzName)
-
-    proc countries*(tz: Timezone): seq[Country] =
-        ## Convenience proc using the embeeded timezone database.
-        EmbeededTzData.countries(tz)
-
-    proc tzNames*(country: Country): seq[string] =
-        ## Convenience proc using the embeeded timezone database.
-        runnableExamples:
-            doAssert "SE".tzNames == @["Europe/Stockholm"]
-            doAssert "VN".tzNames == @["Asia/Ho_Chi_Minh", "Asia/Bangkok"]
-        EmbeededTzData.tzNames(country)
-
-    proc location*(tzName: string): Option[Coordinates] =
-        ## Convenience proc using the embeeded timezone database.
-        runnableExamples:
-            import times, options
-            doAssert $(location"Europe/Stockholm") ==
-                    r"Some(59° 20′ 0″ N 18° 3′ 0″ E)"
-            doAssert (location"Etc/UTC").isNone
-            doAssert utc().location.isNone
-        EmbeededTzData.location(tzName)
-
-    proc location*(tz: Timezone): Option[Coordinates] {.inline.} =
-        ## Convenience proc using the embeeded timezone database
-        EmbeededTzData.location(tz)
 
     proc tz*(tzName: string): Timezone =
         ## Convenience proc using the embeeded timezone database.
@@ -349,7 +240,14 @@ when not defined(timezonesNoEmbeed) or defined(nimdoc):
             doAssert $dt == "1850-01-01T00:00:00+01:12"
         EmbeededTzData.tz(tzName)
 
-    {.pop.}
+    proc tzInfo*(tzName: string): TimezoneInfo =
+        ## Convenience proc using the embeeded timezone database.
+        runnableExamples:
+            import times
+            let stockholm = tz"Europe/Stockholm"
+            let dt = initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
+            doAssert $dt == "1850-01-01T00:00:00+01:12"
+        EmbeededTzData.tzInfo(tzName)
 
 proc staticTz*(hours, minutes, seconds: int = 0): Timezone {.noSideEffect.} =
     ## Create a timezone using a static offset from UTC.
