@@ -6,3 +6,4 @@ nimcache/
 *.html
 *.out
 !docs/*.html
+!tests/zoneinfo/**

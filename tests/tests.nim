@@ -58,6 +58,10 @@ test """Static offset with tz"..."""":
     check staticTz(hours = -1, minutes = 1).name == tz("+00:59").name
     expect ValueError, (discard tz"-2")
     expect ValueError, (discard tz"-2:00")
+    expect ValueError, (discard tz"02:00")
+
+    check getTime().inZone(tz"-02:00").utcOffset == 7200
+    check getTime().inZone(tz"+02:00").utcOffset == -7200
 
 # Does not yet work due to overflow/underflows bugs in the JS backend
 # for int64. See #6752.
@@ -86,7 +90,7 @@ test "Etc/UTC":
 
 test "Dynamic tz data loading":
     const jsonContent = staticRead("../" & Version & ".json")
-    let tzdb = parseJsonTimezones(jsonContent)
+    let tzdb = parseTzDb(jsonContent)
     check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
     check tzdb.version == Version
 
@@ -94,6 +98,36 @@ test "Dynamic tz data loading":
     when defined(timezonesPath) and not defined(js):
         const timezonesPath {.strdefine.} = ""
         block:
-            let tzdb = loadJsonTimezones(timezonesPath)
+            let tzdb = loadTzDb(timezonesPath)
             check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
             check tzdb.version == Version
+
+when defined(posix):
+    import os
+    import .. / timezones / posixtimezones
+    let zoneInfoPath = getCurrentDir() / "tests/zoneinfo"
+
+    test "load posix tz db with path":
+        let db = loadPosixTzDb(zoneInfoPath)
+        let zone = db.tz"Europe/Stockholm"
+        check zone.name == "Europe/Stockholm"
+
+    putEnv("TZDIR", zoneInfoPath)
+
+    test "load posix tz db with TZDIR":
+        let db = loadPosixTzDb()
+        discard db.tz"Europe/Stockholm"
+
+    test "loadPosixTz":
+        let zone1 = loadPosixTz"Europe/Stockholm"
+        check zone1.name == "Europe/Stockholm"
+        let zone2 = loadPosixTz(zoneInfoPath / "Europe/Stockholm")
+        check zone2.name == zoneInfoPath / "Europe/Stockholm"
+
+    test "loadPosixTzInfo":
+        let zone1 = loadPosixTzInfo"Europe/Stockholm"
+        check zone1.location.isSome
+        check $zone1.location.get == "59° 20′ 0″ N 18° 3′ 0″ E"
+        check zone1.countries == @["SE"]
+        doAssertRaises(AssertionError):
+            discard loadPosixTzInfo(zoneInfoPath / "Europe/Stockholm")

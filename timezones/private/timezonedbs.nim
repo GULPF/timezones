@@ -29,7 +29,7 @@ type
         tzByName*: Table[string, TimezoneInternal]
         version*: string
 
-    JsonTzData* = object ## This is the data structure that is stored
+    JsonTzDb = object ## This is the data structure that is stored
                          ## in the JSON file.
         timezones: seq[TimezoneInternal]
         version: string
@@ -68,10 +68,11 @@ proc `$`*(cc: CountryCode): string =
 proc `%`(cc: CountryCode): JsonNode =
     %($cc)
 
-proc `%`(coords: Coordinates): JsonNode = %[
-    coords.lat.deg, coords.lat.min, coords.lat.sec,
-    coords.lon.deg, coords.lon.min, coords.lon.sec,
-]
+proc `%`(coords: Coordinates): JsonNode =
+    %[
+        coords.lat.deg, coords.lat.min, coords.lat.sec,
+        coords.lon.deg, coords.lon.min, coords.lon.sec,
+    ]
 
 proc `%`[T](opt: Option[T]): JsonNode =
     if opt.isNone:
@@ -80,7 +81,7 @@ proc `%`[T](opt: Option[T]): JsonNode =
         %opt.get
 
 proc `%`(db: TimezoneDb): JsonNode =
-    %JsonTzData(
+    %JsonTzDb(
         timezones: toSeq(db.tzByName.values),
         version: db.version
     )
@@ -104,30 +105,21 @@ proc deserializeTzData(jnode: JsonNode): TimezoneDb =
     let version = $jnode["version"].getStr
     var zones = newSeq[TimezoneInternal]()
 
-    zones.add TimezoneInternal(
-        name: "Etc/UTC",
-        transitions: @[Transition(
-            startUtc: 0,
-            startAdj: 0,
-            isDst: false,
-            utcOffset: 0
-        )]
-    )
-
     for tz in jnode["timezones"]:
 
         var countries = newSeq[CountryCode]()
         for countryStr in tz["countries"].to(seq[string]):
             countries.add cc(countryStr)
 
-        let arr = tz["coordinates"].to(array[6, int16])
-        let lat = (arr[0], arr[1], arr[2])
-        let lon = (arr[3], arr[4], arr[5])
-        let coordinates = initCoordinates(lat, lon)
+        let arr = tz["location"].to(Option[array[6, int16]])
+        let location = arr.map do (arr: array[6, int16]) -> Coordinates:
+            let lat = (arr[0], arr[1], arr[2])
+            let lon = (arr[3], arr[4], arr[5])
+            initCoordinates(lat, lon)
 
         zones.add TimezoneInternal(
             transitions: tz["transitions"].to(seq[Transition]),
-            location: some(coordinates),
+            location: location,
             countries: countries,
             name: tz["name"].getStr
         )

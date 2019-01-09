@@ -2,12 +2,12 @@
 # to some coordinates and a list of countries. The zone1970.tab file is part
 # of the tzdb distribution.
 
-import std / [strutils, sequtils]
+import std / [strutils, sequtils, parseutils]
 import coordinates
 
 proc parseCoordinate(str: string): Coordinates =
-    template parse(s: string): int16 = s.parseInt.int16
-
+    template parse(s: string): int16 =
+        s.parseInt.int16
     case str.len
     of "+DDMM+DDDMM".len:
         let lat = (str[0..2].parse, str[3..4].parse,  0'i16)

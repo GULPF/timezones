@@ -37,8 +37,18 @@ proc fetchTimezoneDatabase*(version, dest: string,
     removeFile dest
     download version
     zic regions
-    let filter = tznames.get(@[])
-    let db = TimezoneDb(loadTzDb(filter, ZicDir))
+    if tznames.isSome:
+        let toKeep = tznames.get
+        var toDelete = newSeq[string]()
+        for path in walkDirRec(ZicDir, relative = true):
+            if path notin toKeep:
+                toDelete.add path
+        for path in toDelete:
+            removeFile ZicDir / path
+    copyFile(UnpackDir / "zone1970.tab", ZicDir / "zone1970.tab")
+    var db = TimezoneDb(loadPosixTzDb(ZicDir))
+    # Need to set the version manually as `loadPosixTzDb` don't know about it
+    db.version = version
     db.saveToFile(dest)
 
 const helpMsg = """
@@ -64,7 +74,6 @@ const DefaultOptions = CliOptions(
 
 proc getCliOptions(): CliOptions =
     result = DefaultOptions
-    var hasCommand = false
 
     for kind, key, val in getopt():
         try:
