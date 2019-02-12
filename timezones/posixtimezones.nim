@@ -16,7 +16,7 @@
     let zone3 = db.tz("Europe/Stockholm")
 ]##
 
-import std / [times, options, sequtils, os, algorithm, sugar, strutils]
+import std / [times, options, sequtils, os, algorithm, sugar, strutils, tables]
 import private / [coordinates, zone1970, timezonedbs]
 from .. / timezones import TimezoneInfo
 
@@ -112,14 +112,25 @@ proc extractString(chars: seq[char], start: byte): string =
     result.add chars[idx]
     idx.inc
 
-proc loadLocation(dir, path: string): Option[(Coordinates, seq[string])]
+proc loadLocation(dir, tzName: string): Option[(Coordinates, seq[CountryCode])]
                   {.raises: [TzFileParsingError].} =
-  let tab = dir / "zone1970.tab"
-  if not tab.fileExists:
+  let file = dir / "zone1970.tab"
+  if not file.fileExists:
     return
   try:
-    for countries, coords, tzName in zone1970Entries(tab, find = path):
-      return some((coords, countries))
+    return extractSingleLocation(file, tzName)
+  except ValueError, IOError:
+    let e = getCurrentException()
+    raise newException(TzFileParsingError, "Failed to parse zone1970.tab", e)
+
+proc loadAllLocations(dir: string):
+                      Table[string, (Coordinates, seq[CountryCode])]
+                      {.raises: [TzFileParsingError].} =
+  let file = dir / "zone1970.tab"
+  if not file.fileExists:
+    return
+  try:
+    return extractAllLocations(file)
   except ValueError, IOError:
     let e = getCurrentException()
     raise newException(TzFileParsingError, "Failed to parse zone1970.tab", e)
@@ -317,10 +328,7 @@ proc loadTzInternal(dir, path: string,
   if loadLocation:
     let opt = loadLocation(dir, path)
     result.location = opt.map(value => value[0])
-    result.countries =
-      opt.map(value => value[1]).get(@[])
-        .filterIt(it.len == 2) # Wrong country codes are silently ignored
-        .mapIt(cc(it))
+    result.countries = opt.map(value => value[1]).get(@[])
 
 proc resolvePosixTzPath(path: string): (string, string) =
   if path.isAbsolute:
@@ -386,9 +394,14 @@ proc loadPosixTzDb*(dir = ""):
     else:
       dir
   var zones = newSeq[TimezoneInternal]()
+  let locations = loadAllLocations(dir)
   for path in walkDirRecRelative(dir):
     if path.splitFile.ext != "" or path in ["leapseconds", "+VERSION"]:
       continue
-    # TODO: Don't use loadLocation here!
-    zones.add(loadTzInternal(dir, path, loadLocation = true))
+    var zone = loadTzInternal(dir, path, loadLocation = false)
+    if path in locations:
+      let (coords, countries) = locations.getOrDefault(path)
+      zone.location = some(coords)
+      zone.countries = countries
+    zones.add(zone)
   result = timezones.TimezoneDb(initTimezoneDb("", zones))
