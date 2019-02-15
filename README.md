@@ -43,7 +43,7 @@ doAssert bangkok.countries == @["TH", "KH", "LA", "VN"]
 
 ## API
 - [Generated docs for timezones module](https://gulpf.github.io/timezones/timezones.html).
-- [Generated docs for posixtimezones module](https://gulpf.github.io/timezones/posixtimezones.html).
+- [Generated docs for times/posixtimezones module](https://gulpf.github.io/timezones/posixtimezones.html).
 
 ## Advanced usage
 The timezone definitions from a [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) release are stored in a JSON file. This repo includes the currently latest release, but no guarantee is given as to how fast the bundled timezone database is updated when IANA releases a new version. The JSON file can either be embeeded into the executable (which is the default behavior), or be loaded at runtime.

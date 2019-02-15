@@ -1,6 +1,6 @@
 import timezones / private / tzversion
 
-version       = "0.4.3"
+version       = "0.5.0"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
@@ -8,7 +8,7 @@ license       = "MIT"
 bin = @["timezones/fetchjsontimezones"]
 installDirs = @["timezones"]
 installFiles = @[Version & ".json", "timezones.nim"]
-requires "nim >= 0.19.4"
+requires "nim >= 0.19.9"
 
 # Tasks
 

@@ -1,4 +1,4 @@
-Version 0.5.0 (???)
+Version 0.5.0 (2019-02-15)
 =============
 This release is a nearly complete rewrite of the library. No attempt at backwards compatibility has been made, but the API should now be stable moving forwards.
 
