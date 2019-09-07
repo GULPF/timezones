@@ -1,6 +1,6 @@
-import std / [httpclient, os, osproc, strformat, sequtils, strutils, times,
-    options,  parseopt,  tables]
-import private / [timezonedbs, coordinates, zone1970]
+import std / [httpclient, os, osproc, strformat, sequtils, strutils,
+    options,  parseopt]
+import private / [timezonedbs, coordinates]
 import posixtimezones
 
 const TmpDir = "/tmp/fetchtz"

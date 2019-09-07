@@ -37,10 +37,10 @@
 ]#
 
 import std / [times, strutils, sequtils, tables, macros, options]
-import timezones / private / [timezonedbs, coordinates, tzversion]
+import timezones / private / [timezonedbs, coordinates]
 
 when not defined(js):
-    import std / [os, streams]
+    import std / [streams]
 
 when not defined(nimdoc):
     export coordinates
@@ -265,11 +265,13 @@ when not defined(js):
 
 when not defined(nimsuggest):
     when not defined(timezonesPath):
+        from timezones / private / tzversion import Version
         const timezonesPath = "./" & Version & ".json"
     else:
         const timezonesPath {.strdefine.} = ""
         # isAbsolute isn't available for JS
         when not defined(js):
+            from os import isAbsolute
             when not timezonesPath.isAbsolute:
                 {.error: "Path to custom tz data file must be absolute: " &
                     timezonesPath.}

@@ -2,7 +2,7 @@ import std / [strutils, sequtils, json, tables, hashes, macros, options, times]
 import coordinates
 
 when not defined(JS):
-    import std / [os, streams]
+    import std / [streams]
 
 type
     Transition* = object
@@ -34,7 +34,7 @@ type
         timezones: seq[TimezoneInternal]
         version: string
 
-macro cproc(def: untyped): typed =
+macro cproc(def: untyped) =
     result = quote do:
         when not defined(JS):
             `def`

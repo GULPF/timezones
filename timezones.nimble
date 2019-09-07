@@ -41,6 +41,7 @@ task test, "Run the tests":
         "' -r tests/tests.nim"
 
     rmFile "tests/tests"
+    rmFile "tests/tests.js"
 
     # Test `fetchjsontimezones`
 
