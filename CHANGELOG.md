@@ -1,3 +1,7 @@
+Version 0.5.1 (2019-09-07)
+=============
+- Updated bundled timezone database to version 2019b
+
 Version 0.5.0 (2019-02-15)
 =============
 This release is a nearly complete rewrite of the library. No attempt at backwards compatibility has been made, but the API should now be stable moving forwards.
@@ -7,7 +11,7 @@ Notable additions:
 - A new `timezones.TimezoneInfo` type has been added which represents
 a timezone + additional meta data.
 - Possibility of setting the default timezone db with `setDefaultTzDb`.
-- Updated database to version 2018i
+- Updated bundled timezone database to version 2018i
 
 Version 0.4.0 (2018-11-05)
 =============
@@ -16,4 +20,4 @@ Version 0.4.0 (2018-11-05)
 - The name of static offset timezones have been changed to `±HH:MM:SS` or `±HH:MM` (was: `STATIC[±HH:MM:SS]` or `STATIC[±HH:MM]`).
 - `tz(tzName)` now accepts static offsets on the form `±HH:MM:SS` or `±HH:MM` as well as the special string `LOCAL` for the local timezone.
 - `Dms` and `Coordinates` are now objects instead of tuples
-- Updated database to version 2018g
+- Updated bundled timezone database to version 2018g
