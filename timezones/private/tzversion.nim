@@ -1,1 +1,1 @@
-const Version* = "2019b"
+const Version* = "2019c"
