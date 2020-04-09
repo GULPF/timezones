@@ -1,3 +1,8 @@
+Version 0.5.2 (2019-04-09)
+=============
+- Updated bundled timezone database to version 2019c
+- Fix support for latest Nim
+
 Version 0.5.1 (2019-09-07)
 =============
 - Updated bundled timezone database to version 2019b

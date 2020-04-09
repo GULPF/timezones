@@ -1,6 +1,6 @@
 import timezones / private / tzversion
 
-version       = "0.5.1"
+version       = "0.5.2"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
