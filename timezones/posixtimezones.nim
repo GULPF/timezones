@@ -378,8 +378,7 @@ iterator walkDirRecRelative(dir: string): string =
       if k in {pcFile}:
         yield rel
 
-proc loadPosixTzDb*(dir = ""):
-    timezones.TimezoneDb {.raises: [IOError, TzFileParsingError].} =
+proc loadPosixTzDb*(dir = ""): timezones.TimezoneDb =
   ## Load all available timezones and metadata from ``dir``.
   ##
   ## If `dir` is the empty string, the system timezone dir will be used.
@@ -387,6 +386,8 @@ proc loadPosixTzDb*(dir = ""):
   ## The version field of the returned ``TimezoneDb`` will be set to the
   ## empty string, because there's no reliable way extract the version from a
   ## timezone dir.
+  ##
+  ## A `TzFileParsingError` will be raised if parsing fails.
   let dir =
     if dir == "":
       let (dir, _) = resolvePosixTzPath("")
