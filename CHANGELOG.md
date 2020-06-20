@@ -1,4 +1,9 @@
-Version 0.5.2 (2019-04-09)
+Version 0.5.3 (2020-06-20)
+=============
+- Updated bundled timezone database to version 2020a
+- Fix issue preventing the library from being installable on Windows
+
+Version 0.5.2 (2020-04-09)
 =============
 - Updated bundled timezone database to version 2019c
 - Fix support for latest Nim
