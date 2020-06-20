@@ -265,17 +265,15 @@ when not defined(js):
 
 when not defined(nimsuggest):
     when not defined(timezonesPath):
-        from timezones / private / tzversion import Version
-        const timezonesPath = "./" & Version & ".json"
+        from timezones / private / tzversion import TzDbVersion
+        const timezonesPath = "./" & TzDbVersion & ".json"
     else:
         const timezonesPath {.strdefine.} = ""
-        # isAbsolute isn't available for JS
         when not defined(js):
             from os import isAbsolute
             when not timezonesPath.isAbsolute:
-                {.error: "Path to custom tz data file must be absolute: " &
-                    timezonesPath.}
-
+                {.error: "Path to custom tz data file must be absolute: '" &
+                    timezonesPath & "'".}
         {.hint: "Embedding custom tz data file: " & timezonesPath.}
 
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
