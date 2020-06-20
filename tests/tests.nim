@@ -87,10 +87,10 @@ test "Etc/UTC":
     check (tzInfo"Etc/UTC").countries.len == 0
 
 test "Dynamic tz data loading":
-    const jsonContent = staticRead("../" & Version & ".json")
+    const jsonContent = staticRead("../" & TzDbVersion & ".json")
     let tzdb = parseTzDb(jsonContent)
     check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
-    check tzdb.version == Version
+    check tzdb.version == TzDbVersion
 
     # We use `timezonesPath` so we don't need to resolve the path ourself
     when defined(timezonesPath) and not defined(js):
@@ -98,7 +98,7 @@ test "Dynamic tz data loading":
         block:
             let tzdb = loadTzDb(timezonesPath)
             check (tzdb.tzInfo"Europe/Stockholm").countries == @["SE"]
-            check tzdb.version == Version
+            check tzdb.version == TzDbVersion
 
 when defined(posix):
     import os

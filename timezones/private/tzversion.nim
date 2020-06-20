@@ -1,1 +1,1 @@
-const Version* = "2019c"
+const TzDbVersion* = "2020a"
