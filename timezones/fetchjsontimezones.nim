@@ -16,7 +16,7 @@ else:
     # by using the `--regions` parameter.
     const DefaultRegions = @[
         "africa", "antarctica", "asia", "australasia",
-        "europe", "northamerica", "southamerica", "pacificnew"
+        "europe", "northamerica", "southamerica"
     ]
 
     proc download(version: string) =
