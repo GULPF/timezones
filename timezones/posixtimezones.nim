@@ -304,8 +304,8 @@ proc loadTzInternal(dir, path: string,
       ttInfo: ttInfos[0],
       ttype: transitionTypes[0])]
 
-  tempTransitions.sort((a, b) => a.timeT > b.timeT)
-  leapSeconds.sort((a, b) => a.time > b.time)
+  tempTransitions.sort((a, b) => (a.timeT - b.timeT).int)
+  leapSeconds.sort((a, b) => (a.time - b.time).int)
 
   var transitions = newSeq[Transition](tempTransitions.len)
   for idx in 0 ..< tempTransitions.len:
