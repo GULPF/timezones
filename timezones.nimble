@@ -1,7 +1,7 @@
 import std / os
 import timezones / private / tzversion
 
-version       = "0.5.3"
+version       = "0.5.4"
 author        = "Oscar Nihlgård"
 description   = "Timezone library compatible with the standard library"
 license       = "MIT"
