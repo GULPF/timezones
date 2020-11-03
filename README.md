@@ -1,6 +1,6 @@
-# Timezones
+# Timezones ![CI](https://github.com/GULPF/nimquery/workflows/CI/badge.svg)
 
-A library for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions. Both the C based backends and the JS backend is supported.
+A Nim library for working with timezones. It uses the [IANA timezone database](https://en.wikipedia.org/wiki/Tz_database) as a source for the timezone definitions. Both the C based backends and the JS backend are supported.
 
 ## Installation
 
