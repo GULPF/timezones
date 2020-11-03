@@ -52,7 +52,7 @@ task test, "Run the tests":
 
     when defined(posix):
         exec "nim c --hints:off -r timezones/fetchjsontimezones " &
-            "2018g --out:testdata.json"
+            "2020d --out:testdata.json"
         rmFile "testdata.json"
         rmFile "timezones/fetchjsontimezones"
     else:

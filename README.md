@@ -80,4 +80,4 @@ Usage (`fetchjsontimezones --help`):
     --regions:<regions>          # Only store transitions for these regions.
 ```
 
-For example, `fetchjsontimezones 2017c --out:tzdata.json --regions:"europe america"` will create a timezone data file called `tzdata.json` containing timzeone transitions for the regions 'europe' and 'america' generated from the `2017c` timezone database release.
+For example, `fetchjsontimezones 2020d --out:tzdata.json --regions:"europe northamerica"` will create a timezone data file called `tzdata.json` containing timzeone transitions for the regions 'europe' and 'northamerica' generated from the `2020d` timezone database release.
