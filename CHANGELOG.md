@@ -1,3 +1,9 @@
+Version 0.5.4 (2020-11-03)
+=============
+- Updated bundled timezone database to version 2020d
+- Fix bug with `timezones/posixtimezones` in release mode
+- Fix issue with `fetchjsontimexones` for newer IANA timezone releases
+
 Version 0.5.3 (2020-06-20)
 =============
 - Updated bundled timezone database to version 2020a
