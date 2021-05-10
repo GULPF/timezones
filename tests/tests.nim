@@ -130,9 +130,9 @@ when defined(posix):
         doAssertRaises(AssertionError):
             discard loadPosixTzInfo(zoneInfoPath / "Europe/Stockholm")
 
-test "Threading":
+test "threading":
     proc testThread() =
-        # check that the default databse is initialized thread-local
+        # check that the default database is initialized thread-local
         discard tz("America/New_York")
 
     var thr: array[0..4, Thread[void]]

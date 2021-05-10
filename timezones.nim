@@ -78,6 +78,8 @@ type
             ## coordinates of Stockholm, the capital of Sweden.
 
 var defaultTzDb {.threadvar.}: TimezoneDb
+# track if defaultTzDb is loaded (in the current thread)
+var defaultTzDbLoaded {.threadvar.}: bool
 
 when not defined(nimsuggest):
     when not defined(timezonesPath):
@@ -95,6 +97,7 @@ when not defined(nimsuggest):
 when not defined(timezonesNoEmbeed) or defined(nimdoc):
     const content = staticRead timezonesPath
     defaultTzDb = parseTzData(content).TimezoneDb
+    defaultTzDbLoaded = true
 
 proc parseTzDb*(content: string): TimezoneDb =
     ## Parse a timezone database from its JSON representation.
@@ -110,9 +113,6 @@ when not defined(js):
         let fs = openFileStream(path, fmRead)
         defer: fs.close()
         parseTzData(fs).TimezoneDb
-
-proc empty(db: TimezoneDb): bool {.inline.} =
-    len(timezonedbs.TimezoneDb(db).tzByName) == 0
 
 proc getTz(db: TimezoneDb, tzName: string): (bool, TimezoneInternal)
         {.inline, raises: [].} =
@@ -205,11 +205,12 @@ proc getDefaultTzDb*(): TimezoneDb =
     ## local varaible, so calling ``setDefaultTzDb`` only affects the calling
     ## thread!
     try:
-        if defaultTzDb.empty:
+        if not defaultTzDbLoaded:
             # thread-level initialization. static content is still used
             setDefaultTzDb(parseTzDb(content))
+            defaultTzDbLoaded = true
     except Exception:
-        raise newException(ValueError, "can not find local tz db")
+        raise newException(ValueError, "Cannot find local tz db")
     defaultTzDb
 
 proc tz*(tzName: string): Timezone {.inline, raises: [ValueError].} =
