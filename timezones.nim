@@ -255,7 +255,7 @@ proc tzInfo*(tzName: string): TimezoneInfo {.inline, raises: [ValueError].} =
         doAssert stockholmInfo.timezone == tz"Europe/Stockholm"
         doAssert stockholmInfo.countries == @["SE"]
         doAssert $stockholmInfo.location == "Some(59° 20′ 0″ N 18° 3′ 0″ E)"
-    defaultTzDb.tzInfo(tzName)
+    getdefaultTzDb().tzInfo(tzName)
 
 proc staticTz*(hours, minutes, seconds: int = 0): Timezone
                {.noSideEffect, raises: [].} =
