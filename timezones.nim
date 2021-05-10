@@ -204,13 +204,14 @@ proc getDefaultTzDb*(): TimezoneDb =
     ## ``tzInfo(tzName)``. The default timezone database is stored in a thread
     ## local varaible, so calling ``setDefaultTzDb`` only affects the calling
     ## thread!
-    try:
-        if not defaultTzDbLoaded:
-            # thread-level initialization. static content is still used
-            setDefaultTzDb(parseTzDb(content))
-            defaultTzDbLoaded = true
-    except Exception:
-        raise newException(ValueError, "Cannot find local tz db")
+    when not defined(timezonesNoEmbeed) or defined(nimdoc):
+        try:
+            if not defaultTzDbLoaded:
+                # thread-level initialization. static content is still used
+                setDefaultTzDb(parseTzDb(content))
+                defaultTzDbLoaded = true
+        except Exception:
+            raise newException(ValueError, "can not find local tz db")
     defaultTzDb
 
 proc tz*(tzName: string): Timezone {.inline, raises: [ValueError].} =
