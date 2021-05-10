@@ -129,3 +129,13 @@ when defined(posix):
         check zone1.countries == @["SE"]
         doAssertRaises(AssertionError):
             discard loadPosixTzInfo(zoneInfoPath / "Europe/Stockholm")
+
+test "Threading":
+    proc testThread() =
+        # check that the default databse is initialized thread-local
+        discard tz("America/New_York")
+
+    var thr: array[0..4, Thread[void]]
+    for i in 0..high(thr):
+        createThread(thr[i], testThread)
+    joinThreads(thr)
