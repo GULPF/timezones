@@ -130,12 +130,13 @@ when defined(posix):
         doAssertRaises(AssertionError):
             discard loadPosixTzInfo(zoneInfoPath / "Europe/Stockholm")
 
-test "threading":
-    proc testThread() =
-        # check that the default database is initialized thread-local
-        discard tz("America/New_York")
+when not defined(js):
+    test "threading":
+        proc testThread() =
+            # check that the default database is initialized thread-local
+            discard tz("America/New_York")
 
-    var thr: array[0..4, Thread[void]]
-    for i in 0..high(thr):
-        createThread(thr[i], testThread)
-    joinThreads(thr)
+        var thr: array[0..4, Thread[void]]
+        for i in 0..high(thr):
+            createThread(thr[i], testThread)
+        joinThreads(thr)

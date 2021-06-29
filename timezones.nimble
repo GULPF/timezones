@@ -25,11 +25,11 @@ task test, "Run the tests":
 
     echo "\nRunning tests (C)"
     echo "==============="
-    exec "nim c --hints:off -r tests/tests.nim"
+    exec "nim c --hints:off --threads:on -r tests/tests.nim"
 
     echo "\nRunning tests (C in release mode)"
     echo "==============="
-    exec "nim c --hints:off -r -d:release tests/tests.nim"
+    exec "nim c --hints:off --threads:on -r -d:release tests/tests.nim"
 
     echo "\nRunning tests (JS)"
     echo "================"
@@ -37,7 +37,7 @@ task test, "Run the tests":
 
     echo "\nTesting -d:timezonesPath (C)"
     echo "================"
-    exec "nim c --hints:off -d:timezonesPath=\"" & tzdataPath &
+    exec "nim c --hints:off --threads:on -d:timezonesPath=\"" & tzdataPath &
         "\" -r tests/tests.nim"
 
     echo "\nTesting -d:timezonesPath (JS)"
