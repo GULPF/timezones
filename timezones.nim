@@ -78,6 +78,41 @@ type
             ## coordinates of Stockholm, the capital of Sweden.
 
 var defaultTzDb {.threadvar.}: TimezoneDb
+# track if defaultTzDb is loaded (in the current thread)
+var defaultTzDbLoaded {.threadvar.}: bool
+
+when not defined(nimsuggest):
+    when not defined(timezonesPath):
+        from timezones / private / tzversion import TzDbVersion
+        const timezonesPath = "./" & TzDbVersion & ".json"
+    else:
+        const timezonesPath {.strdefine.} = ""
+        when not defined(js):
+            from os import isAbsolute
+            when not timezonesPath.isAbsolute:
+                {.error: "Path to custom tz data file must be absolute: '" &
+                    timezonesPath & "'".}
+        {.hint: "Embedding custom tz data file: " & timezonesPath.}
+
+when not defined(timezonesNoEmbeed) or defined(nimdoc):
+    const content = staticRead timezonesPath
+    defaultTzDb = parseTzData(content).TimezoneDb
+    defaultTzDbLoaded = true
+
+proc parseTzDb*(content: string): TimezoneDb =
+    ## Parse a timezone database from its JSON representation.
+    parseTzData(content).TimezoneDb
+
+when not defined(js):
+    proc parseTzDb*(s: Stream): TimezoneDb =
+        ## Parse a timezone database from its JSON representation.
+        parseTzData(s).TimezoneDb
+
+    proc loadTzDb*(path: string): TimezoneDb =
+        ## Load a timezone database from a JSON file.
+        let fs = openFileStream(path, fmRead)
+        defer: fs.close()
+        parseTzData(fs).TimezoneDb
 
 proc getTz(db: TimezoneDb, tzName: string): (bool, TimezoneInternal)
         {.inline, raises: [].} =
@@ -158,6 +193,27 @@ proc tz*(db: TimezoneDb, tzName: string): Timezone {.raises: [ValueError].} =
                 "Timezone does not exist in database: " & tzName)
         result = newTimezone(tz)
 
+proc setDefaultTzDb*(db: TimezoneDb) =
+    ## Sets the timezone database that will be used for ``tz(tzName)`` and
+    ## ``tzInfo(tzName)``. The default timezone database is stored in a thread
+    ## local variable, so calling this only affects the calling thread!
+    defaultTzDb = db
+
+proc getDefaultTzDb*(): TimezoneDb =
+    ## Gets the timezone database that is used for ``tz(tzName)`` and
+    ## ``tzInfo(tzName)``. The default timezone database is stored in a thread
+    ## local varaible, so calling ``setDefaultTzDb`` only affects the calling
+    ## thread!
+    when not defined(timezonesNoEmbeed) or defined(nimdoc):
+        try:
+            if not defaultTzDbLoaded:
+                # thread-level initialization. static content is still used
+                setDefaultTzDb(parseTzDb(content))
+                defaultTzDbLoaded = true
+        except Exception:
+            raise newException(ValueError, "can not find local tz db")
+    defaultTzDb
+
 proc tz*(tzName: string): Timezone {.inline, raises: [ValueError].} =
     ## Convenience proc using the default timezone database.
     runnableExamples:
@@ -165,7 +221,7 @@ proc tz*(tzName: string): Timezone {.inline, raises: [ValueError].} =
         let stockholm = tz"Europe/Stockholm"
         let dt = initDateTime(1, mJan, 1850, 00, 00, 00, stockholm)
         doAssert $dt == "1850-01-01T00:00:00+01:12"
-    defaultTzDb.tz(tzName)
+    getDefaultTzDb().tz(tzName)
 
 proc tzInfo*(db: TimezoneDb, tzName: string): TimezoneInfo
              {.raises: [ValueError].}=
@@ -201,20 +257,7 @@ proc tzInfo*(tzName: string): TimezoneInfo {.inline, raises: [ValueError].} =
         doAssert stockholmInfo.timezone == tz"Europe/Stockholm"
         doAssert stockholmInfo.countries == @["SE"]
         doAssert $stockholmInfo.location == "Some(59° 20′ 0″ N 18° 3′ 0″ E)"
-    defaultTzDb.tzInfo(tzName)
-
-proc setDefaultTzDb*(db: TimezoneDb) =
-    ## Sets the timezone database that will be used for ``tz(tzName)`` and
-    ## ``tzInfo(tzName)``. The default timezone database is stored in a thread
-    ## local variable, so calling this only affects the calling thread!
-    defaultTzDb = db
-
-proc getDefaultTzDb*(): TimezoneDb =
-    ## Gets the timezone database that is used for ``tz(tzName)`` and
-    ## ``tzInfo(tzName)``. The default timezone database is stored in a thread
-    ## local varaible, so calling ``setDefaultTzDb`` only affects the calling
-    ## thread!
-    defaultTzDb
+    getdefaultTzDb().tzInfo(tzName)
 
 proc staticTz*(hours, minutes, seconds: int = 0): Timezone
                {.noSideEffect, raises: [].} =
@@ -247,38 +290,6 @@ proc staticTz*(hours, minutes, seconds: int = 0): Timezone
             "+" & offsetStr
 
     result = newTimezone(tzName, offset)
-
-proc parseTzDb*(content: string): TimezoneDb =
-    ## Parse a timezone database from its JSON representation.
-    parseTzData(content).TimezoneDb
-
-when not defined(js):
-    proc parseTzDb*(s: Stream): TimezoneDb =
-        ## Parse a timezone database from its JSON representation.
-        parseTzData(s).TimezoneDb
-
-    proc loadTzDb*(path: string): TimezoneDb =
-        ## Load a timezone database from a JSON file.
-        let fs = openFileStream(path, fmRead)
-        defer: fs.close()
-        parseTzData(fs).TimezoneDb
-
-when not defined(nimsuggest):
-    when not defined(timezonesPath):
-        from timezones / private / tzversion import TzDbVersion
-        const timezonesPath = "./" & TzDbVersion & ".json"
-    else:
-        const timezonesPath {.strdefine.} = ""
-        when not defined(js):
-            from os import isAbsolute
-            when not timezonesPath.isAbsolute:
-                {.error: "Path to custom tz data file must be absolute: '" &
-                    timezonesPath & "'".}
-        {.hint: "Embedding custom tz data file: " & timezonesPath.}
-
-when not defined(timezonesNoEmbeed) or defined(nimdoc):
-    const content = staticRead timezonesPath
-    defaultTzDb = parseTzData(content).TimezoneDb
 
 proc version*(db: TimezoneDb): string {.raises: [].} =
     ## The version of the IANA timezone database being represented by ``db``.
